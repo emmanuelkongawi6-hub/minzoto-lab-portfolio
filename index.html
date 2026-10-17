@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MINZOTO Lab | Studio créatif</title>
+<style>
+:root {
+  --gold: #e7b928;
+  --dark: #171717;
+  --muted: #777;
+  --light: #faf9f6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--dark);
+  background: white;
+}
+header {
+  padding: 20px 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+.logo { font-size: 23px; font-weight: 800; }
+.logo span { color: var(--gold); }
+nav a {
+  margin-left: 16px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+.hero {
+  padding: 75px 7%;
+  background: var(--light);
+  text-align: center;
+}
+.stars { color: var(--gold); font-size: 36px; letter-spacing: 8px; }
+.hero h1 {
+  font-size: clamp(35px, 7vw, 65px);
+  margin: 18px 0;
+  line-height: 1.08;
+}
+.hero h1 span { color: #c69a16; }
+.hero p {
+  color: #666;
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 18px auto 28px;
+}
+.btn {
+  display: inline-block;
+  padding: 14px 23px;
+  background: var(--dark);
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  margin: 5px;
+}
+.btn.gold { background: var(--gold); color: #171717; }
+section { padding: 55px 7%; }
+h2 { font-size: 30px; margin-bottom: 10px; }
+.intro { color: var(--muted); line-height: 1.7; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+.card {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+.art {
+  height: 155px;
+  display: grid;
+  place-items: center;
+  background: #f3ead0;
+  color: #665018;
+  font-size: 25px;
+  font-weight: bold;
+}
+.card:nth-child(2) .art { background: #e7e7e7; }
+.card:nth-child(3) .art { background: #eee5e1; }
+.card:nth-child(4) .art { background: #e4e8dc; }
+.card-body { padding: 18px; }
+.card h3 { margin: 0 0 8px; }
+.price { font-weight: bold; color: #9c7810; }
+.services { background: var(--light); }
+.contact { text-align: center; }
+footer {
+  padding: 25px;
+  background: var(--dark);
+  color: white;
+  text-align: center;
+  font-size: 13px;
+}
+@media(max-width:600px) {
+  header { padding: 17px 5%; }
+  nav a { margin-left: 8px; font-size: 12px; }
+  .logo { font-size: 19px; }
+  .hero { padding: 55px 6%; }
+  section { padding: 42px 6%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">MINZOTO <span>Lab</span></div>
+  <nav>
+    <a href="#travaux">Travaux</a>
+    <a href="#services">Tarifs</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="stars">★ <span style="font-size:22px">★ ★</span></div>
+    <h1>Les idées deviennent<br><span>des créations.</span></h1>
+    <p>
+      Bienvenue chez MINZOTO Lab, votre studio créatif.
+      Identité visuelle, affiches, portraits numériques et retouche photo
+      pour donner vie à vos idées.
+    </p>
+    <a class="btn gold" href="#travaux">Découvrir mes travaux</a>
+    <a class="btn" href="#contact">Me contacter</a>
+  </div>
+
+  <section id="travaux">
+    <h2>Quelques créations</h2>
+    <p class="intro">Un aperçu de l'univers créatif de MINZOTO Lab.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="art">LOGO DESIGN</div>
+        <div class="card-body">
+          <h3>Identité visuelle</h3>
+          <p class="intro">Des logos uniques pour vos projets et entreprises.</p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="art">AFFICHE</div>
+        <div class="card-body">
+          <h3>Affiches & flyers</h3>
+          <p class="intro">Des visuels clairs, créatifs et mémorables.</p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="art">PORTRAIT</div>
+        <div class="card-body">
+          <h3>Portrait numérique</h3>
+          <p class="intro">Des portraits artistiques personnalisés.</p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="art">PHOTO RETOUCH</div>
+        <div class="card-body">
+          <h3>Retouche photo</h3>
+          <p class="intro">Des images améliorées avec soin et précision.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="services" id="services">
+    <h2>Services & tarifs</h2>
+    <p class="intro">Voici des exemples de tarifs. Ils seront à personnaliser.</p>
+    <div class="grid">
+      <article class="card"><div class="card-body">
+        <h3>Création de logo</h3>
+        <p class="price">Prix sur demande</p>
+      </div></article>
+      <article class="card"><div class="card-body">
+        <h3>Affiche publicitaire</h3>
+        <p class="price">Prix sur demande</p>
+      </div></article>
+      <article class="card"><div class="card-body">
+        <h3>Portrait numérique</h3>
+        <p class="price">Prix sur demande</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <h2>Un projet en tête ?</h2>
+    <p class="intro">Parlons de votre prochaine création.</p>
+    <a class="btn gold"
+       href="https://wa.me/"
+       target="_blank" rel="noopener">Contacter sur WhatsApp</a>
+  </section>
+</main>
+
+<footer>
+  © 2026 MINZOTO Lab — Studio créatif
+</footer>
+</body>
+  </html>
