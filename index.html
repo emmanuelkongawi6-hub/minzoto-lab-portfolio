@@ -39,6 +39,13 @@ nav a {
   text-align: center;
 }
 .stars { color: var(--gold); font-size: 36px; letter-spacing: 8px; }
+.logo-stars { width: 120px; height: auto; display: block; margin: 0 auto; overflow: visible; }
+.logo-stars use { transform-box: fill-box; transform-origin: center; }
+@keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
+.logo-stars .s1 { animation: twinkle 3.6s ease-in-out infinite; }
+.logo-stars .s2 { animation: twinkle 3.6s ease-in-out .9s infinite; }
+.logo-stars .s3 { animation: twinkle 3.6s ease-in-out 1.8s infinite; }
+@media (prefers-reduced-motion: reduce) { .logo-stars use { animation: none !important; } }
 .hero h1 {
   font-size: clamp(35px, 7vw, 65px);
   margin: 18px 0;
@@ -85,6 +92,8 @@ h2 { font-size: 30px; margin-bottom: 10px; }
   font-size: 25px;
   font-weight: bold;
 }
+.art{overflow:hidden}
+.art img{width:100%;height:100%;object-fit:cover;display:block}
 .card:nth-child(2) .art { background: #e7e7e7; }
 .card:nth-child(3) .art { background: #eee5e1; }
 .card:nth-child(4) .art { background: #e4e8dc; }
@@ -121,7 +130,16 @@ footer {
 
 <main>
   <div class="hero">
-    <div class="stars">★ <span style="font-size:22px">★ ★</span></div>
+    <svg class="logo-stars" viewBox="240 20 610 485" role="img" aria-label="Trois étoiles MINZOTO Lab" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <path id="star" d="M0,-1 Q0.27,-0.27 1,0 Q0.27,0.27 0,1 Q-0.27,0.27 -1,0 Q-0.27,-0.27 0,-1Z"/>
+      </defs>
+      <g fill="#ffdd12">
+        <use class="s1" href="#star" transform="translate(452 245) scale(197 215)"/>
+        <use class="s2" href="#star" transform="translate(672 128) scale(95 100)"/>
+        <use class="s3" href="#star" transform="translate(698 355) scale(135 137)"/>
+      </g>
+    </svg>
     <h1>Les idées deviennent<br><span>des créations.</span></h1>
     <p>
       Bienvenue chez MINZOTO Lab, votre studio créatif.
@@ -135,7 +153,7 @@ footer {
   <section id="travaux">
     <h2>Quelques créations</h2>
     <p class="intro">Un aperçu de l'univers créatif de MINZOTO Lab.</p>
-    <div class="grid">
+    <div class="grid" id="projectGrid">
       <article class="card">
         <div class="art">LOGO DESIGN</div>
         <div class="card-body">
@@ -170,7 +188,7 @@ footer {
   <section class="services" id="services">
     <h2>Services & tarifs</h2>
     <p class="intro">Voici des exemples de tarifs. Ils seront à personnaliser.</p>
-    <div class="grid">
+    <div class="grid" id="serviceGrid">
       <article class="card"><div class="card-body">
         <h3>Création de logo</h3>
         <p class="price">Prix sur demande</p>
@@ -198,5 +216,56 @@ footer {
 <footer>
   © 2026 MINZOTO Lab — Studio créatif
 </footer>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDLruZVIQKBQQS6fKW2ZNnCZReJEO5x04k",
+  authDomain: "minzoto-lab.firebaseapp.com",
+  projectId: "minzoto-lab",
+  appId: "1:591899158602:web:01677073ff278ab21e9eb3"
+});
+const db = getFirestore(app);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// Galerie : les projets ajoutés dans l'administration
+try {
+  const snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
+  if (!snap.empty) {
+    document.getElementById("projectGrid").innerHTML = snap.docs.map(d => {
+      const p = d.data();
+      const img = (p.image && /^data:image\//.test(p.image))
+        ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">`
+        : esc((p.category || "").toUpperCase());
+      return `<article class="card"><div class="art">${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
+    }).join("");
+  }
+} catch (e) { console.warn("Projets non chargés", e); }
+
+// Tarifs et services
+try {
+  const c = await getDoc(doc(db,"site","config"));
+  if (c.exists()) {
+    const d = c.data(), pr = d.prices || {};
+    const base = [
+      ["Création de logo", pr.logo],
+      ["Affiche publicitaire", pr.poster],
+      ["Portrait numérique", pr.portrait]
+    ];
+    const names = base.map(b => b[0]);
+    const services = Array.isArray(d.services) ? d.services : names;
+    const cards = [];
+    base.forEach(([n, price]) => { if (services.includes(n)) cards.push([n, price || "Prix sur demande"]); });
+    services.filter(s => !names.includes(s)).forEach(s => cards.push([s, "Prix sur demande"]));
+    if (cards.length) {
+      document.getElementById("serviceGrid").innerHTML = cards.map(([n, price]) =>
+        `<article class="card"><div class="card-body"><h3>${esc(n)}</h3><p class="price">${esc(price)}</p></div></article>`
+      ).join("");
+    }
+  }
+} catch (e) { console.warn("Tarifs non chargés", e); }
+</script>
 </body>
-  </html>
+          </html>
