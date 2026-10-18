@@ -93,7 +93,9 @@ h2 { font-size: 30px; margin-bottom: 10px; }
   font-weight: bold;
 }
 .art{overflow:hidden}
-.art img{width:100%;height:100%;object-fit:cover;display:block}
+.art img{width:100%;height:auto;display:block}
+.art.has-img{height:auto;display:block;background:#f4f4f2}
+#projectGrid{align-items:start}
 .card:nth-child(2) .art { background: #e7e7e7; }
 .card:nth-child(3) .art { background: #eee5e1; }
 .card:nth-child(4) .art { background: #e4e8dc; }
@@ -236,10 +238,11 @@ try {
   if (!snap.empty) {
     document.getElementById("projectGrid").innerHTML = snap.docs.map(d => {
       const p = d.data();
-      const img = (p.image && /^data:image\//.test(p.image))
+      const has = p.image && /^data:image\//.test(p.image);
+      const img = has
         ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">`
         : esc((p.category || "").toUpperCase());
-      return `<article class="card"><div class="art">${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
+      return `<article class="card"><div class="art${has ? " has-img" : ""}">${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
     }).join("");
   }
 } catch (e) { console.warn("Projets non chargés", e); }
@@ -268,4 +271,4 @@ try {
 } catch (e) { console.warn("Tarifs non chargés", e); }
 </script>
 </body>
-          </html>
+                                     </html>
