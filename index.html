@@ -51,6 +51,7 @@ nav a {
   margin: 18px 0;
   line-height: 1.08;
 }
+.hero h1 b { font-weight: inherit; }
 .hero h1 span { color: #c69a16; }
 .hero p {
   color: #666;
@@ -142,8 +143,8 @@ footer {
         <use class="s3" href="#star" transform="translate(698 355) scale(135 137)"/>
       </g>
     </svg>
-    <h1>Les idées deviennent<br><span>des créations.</span></h1>
-    <p>
+    <h1><b id="heroT1">Les idées deviennent</b><br><span id="heroT2">des créations.</span></h1>
+    <p id="heroText">
       Bienvenue chez MINZOTO Lab, votre studio créatif.
       Identité visuelle, affiches, portraits numériques et retouche photo
       pour donner vie à vos idées.
@@ -209,13 +210,13 @@ footer {
   <section id="contact" class="contact">
     <h2>Un projet en tête ?</h2>
     <p class="intro">Parlons de votre prochaine création.</p>
-    <a class="btn gold"
+    <a class="btn gold" id="waBtn"
        href="https://wa.me/243835263914?text=Bonjour%20MINZOTO%20Lab%2C%20j%27aimerais%20discuter%20d%27un%20projet."
        target="_blank" rel="noopener">Contacter sur WhatsApp</a>
   </section>
 </main>
 
-<footer>
+<footer id="footerText">
   © 2026 MINZOTO Lab — Studio créatif
 </footer>
 <script type="module">
@@ -252,6 +253,15 @@ try {
   const c = await getDoc(doc(db,"site","config"));
   if (c.exists()) {
     const d = c.data(), pr = d.prices || {};
+    const t = d.texts || {};
+    const setText = (id, v) => { if (v && String(v).trim()) document.getElementById(id).textContent = v; };
+    setText("heroT1", t.heroTitle1); setText("heroT2", t.heroTitle2);
+    setText("heroText", t.heroText); setText("footerText", t.footer);
+    if (t.whatsapp) {
+      const n = String(t.whatsapp).replace(/\D/g, "");
+      if (n.length >= 8) document.getElementById("waBtn").href =
+        "https://wa.me/" + n + "?text=" + encodeURIComponent("Bonjour MINZOTO Lab, j'aimerais discuter d'un projet.");
+    }
     const base = [
       ["Création de logo", pr.logo],
       ["Affiche publicitaire", pr.poster],
@@ -271,4 +281,4 @@ try {
 } catch (e) { console.warn("Tarifs non chargés", e); }
 </script>
 </body>
-                                       </html>
+                                </html>
