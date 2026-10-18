@@ -85,6 +85,7 @@ textarea{min-height:75px}
     <button class="active" onclick="showTab('projects',this)">Mes projets</button>
     <button onclick="showTab('prices',this)">Mes tarifs</button>
     <button onclick="showTab('services',this)">Mes services</button>
+    <button onclick="showTab('texts',this)">Textes du site</button>
   </nav>
 
   <section id="projects">
@@ -136,6 +137,25 @@ textarea{min-height:75px}
       <p id="serviceMessage" class="muted"></p>
     </div>
   </section>
+
+  <section id="texts" class="hidden">
+    <div class="panel">
+      <h2>Textes du site</h2>
+      <p class="muted">Modifie ici les textes de la page d'accueil et ton numéro WhatsApp.</p>
+      <label for="heroTitle1">Titre : première ligne</label>
+      <input id="heroTitle1">
+      <label for="heroTitle2">Titre : deuxième ligne (en doré)</label>
+      <input id="heroTitle2">
+      <label for="heroText">Texte de présentation</label>
+      <textarea id="heroText" style="min-height:120px"></textarea>
+      <label for="whatsapp">Numéro WhatsApp (avec indicatif, sans + ni espaces)</label>
+      <input id="whatsapp" inputmode="numeric" placeholder="243812345678">
+      <label for="footerTxt">Texte du bas de page</label>
+      <input id="footerTxt">
+      <button class="gold" onclick="saveTexts()" style="margin-top:16px">Enregistrer les textes</button>
+      <p id="textMessage" class="muted"></p>
+    </div>
+  </section>
 </main>
 
 <script type="module">
@@ -162,7 +182,10 @@ const $ = id => document.getElementById(id);
 
 const DEFAULT_SERVICES = ["Création de logo","Affiche publicitaire","Portrait numérique"];
 let projects = [];
-let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", portrait:"Prix sur demande"}, services: DEFAULT_SERVICES.slice() };
+let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", portrait:"Prix sur demande"}, services: DEFAULT_SERVICES.slice(),
+  texts: { heroTitle1:"Les idées deviennent", heroTitle2:"des créations.",
+    heroText:"Bienvenue chez MINZOTO Lab, votre studio créatif. Identité visuelle, affiches, portraits numériques et retouche photo pour donner vie à vos idées.",
+    whatsapp:"243835263914", footer:"© 2026 MINZOTO Lab — Studio créatif" } };
 let photoData = "";
 
 function escapeText(s){
@@ -190,9 +213,16 @@ window.login = async function () {
     await signInWithEmailAndPassword(auth, email, password);
     $("loginPassword").value = "";
   } catch (e) {
-    $("loginError").textContent = (e.code === "auth/too-many-requests")
-      ? "Trop de tentatives. Réessaie dans quelques minutes."
-      : "Email ou mot de passe incorrect.";
+    const msgs = {
+      "auth/invalid-credential": "Email ou mot de passe incorrect.",
+      "auth/wrong-password": "Email ou mot de passe incorrect.",
+      "auth/user-not-found": "Email ou mot de passe incorrect.",
+      "auth/invalid-email": "Adresse email invalide.",
+      "auth/too-many-requests": "Trop de tentatives. Réessaie dans quelques minutes.",
+      "auth/network-request-failed": "Pas de connexion internet. Réessaie.",
+      "auth/unauthorized-domain": "Ce domaine n'est pas autorisé dans Firebase (Authentication > Paramètres > Domaines autorisés)."
+    };
+    $("loginError").textContent = msgs[e.code] || ("Connexion impossible (" + (e.code || e.message) + ")");
   }
   $("loginBtn").disabled = false;
 };
@@ -204,23 +234,31 @@ async function loadAll(){
   try {
     const snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
     projects = snap.docs.map(d => ({id:d.id, ...d.data()}));
-  } catch (e) { say("projectMessage","Impossible de charger les projets : " + e.code); }
+  } catch (e) {
+    say("projectMessage", e.code === "permission-denied"
+      ? "Accès refusé : publie les règles Firestore (Firebase > Firestore > Règles)."
+      : "Impossible de charger les projets : " + (e.code || e.message));
+  }
   try {
     const c = await getDoc(doc(db,"site","config"));
     if (c.exists()) {
       const d = c.data();
       config.prices = Object.assign(config.prices, d.prices || {});
       if (Array.isArray(d.services)) config.services = d.services;
+      config.texts = Object.assign(config.texts, d.texts || {});
     }
   } catch (e) { /* config pas encore créée */ }
   $("logoPrice").value = config.prices.logo;
   $("posterPrice").value = config.prices.poster;
   $("portraitPrice").value = config.prices.portrait;
+  const T = config.texts;
+  $("heroTitle1").value = T.heroTitle1; $("heroTitle2").value = T.heroTitle2;
+  $("heroText").value = T.heroText; $("whatsapp").value = T.whatsapp; $("footerTxt").value = T.footer;
   renderProjects(); renderServices();
 }
 
 window.showTab = function (id, button) {
-  ["projects","prices","services"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  ["projects","prices","services","texts"].forEach(x => $(x).classList.toggle("hidden", x !== id));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   button.classList.add("active");
 };
@@ -319,6 +357,18 @@ window.savePrices = async function () {
     await setDoc(doc(db,"site","config"), config, {merge:true});
     say("priceMessage","Tarifs enregistrés et publiés.", true);
   } catch (e) { say("priceMessage","Échec : " + (e.code || e.message)); }
+};
+
+/* ---------- Textes du site ---------- */
+window.saveTexts = async function () {
+  const wa = $("whatsapp").value.replace(/\D/g, "");
+  if (wa.length < 8) { say("textMessage","Numéro WhatsApp invalide."); return; }
+  config.texts = { heroTitle1: $("heroTitle1").value.trim(), heroTitle2: $("heroTitle2").value.trim(),
+    heroText: $("heroText").value.trim(), whatsapp: wa, footer: $("footerTxt").value.trim() };
+  try {
+    await setDoc(doc(db,"site","config"), config, {merge:true});
+    say("textMessage","Textes enregistrés et publiés.", true);
+  } catch (e) { say("textMessage","Échec : " + (e.code || e.message)); }
 };
 
 /* ---------- Services ---------- */
