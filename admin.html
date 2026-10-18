@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>Administration | MINZOTO Lab</title>
 <style>
 *{box-sizing:border-box}
@@ -33,20 +33,45 @@ textarea{min-height:75px}
 .danger{background:#f8e5e5;color:#8d2222}
 .hidden{display:none}
 .notice{background:#fff6d8;padding:13px;border-radius:8px;font-size:13px;line-height:1.5}
+.error{color:#8d2222;font-size:14px;margin:12px 0 0;min-height:18px}
+#loginBox{max-width:420px;margin:40px auto}
+#loginBox button{width:100%;margin-top:18px}
+.logout{background:#333;color:#fff;padding:9px 12px;font-size:13px}
 @media(max-width:520px){main{padding:15px}.stat{grid-template-columns:1fr 1fr}.panel{padding:14px}}
 </style>
 </head>
 <body>
 <header>
-  <strong>MINZOTO <span>Lab</span></strong>
-  <p>Espace de gestion du studio créatif</p>
+  <div class="row">
+    <div>
+      <strong>MINZOTO <span>Lab</span></strong>
+      <p>Espace de gestion du studio créatif</p>
+    </div>
+    <button id="logoutBtn" class="logout hidden" onclick="logout()">Déconnexion</button>
+  </div>
 </header>
-<main>
+
+<!-- ÉCRAN DE CONNEXION -->
+<main id="loginScreen">
+  <div id="loginBox" class="panel">
+    <h2>Connexion</h2>
+    <p class="muted">Accès réservé à l'administrateur.</p>
+    <label for="loginEmail">Adresse email</label>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="ton@email.com">
+    <label for="loginPassword">Mot de passe</label>
+    <input id="loginPassword" type="password" autocomplete="current-password">
+    <button class="gold" id="loginBtn" onclick="login()">Se connecter</button>
+    <p id="loginError" class="error"></p>
+  </div>
+</main>
+
+<!-- TABLEAU DE BORD (visible seulement après connexion) -->
+<main id="dashboard" class="hidden">
   <h1>Tableau de bord</h1>
   <p class="muted">Gère ici tes projets, tes services et tes tarifs.</p>
 
   <div class="notice">
-    Démonstration en cours : cette page n'est pas encore protégée par un mot de passe et les changements ne sont pas encore synchronisés avec le site public. N'y mets aucune information confidentielle.
+    Connexion sécurisée active. Les changements ne sont pas encore synchronisés avec le site public : la sauvegarde permanente sera ajoutée à l'étape suivante.
   </div>
 
   <div class="stat">
@@ -107,7 +132,54 @@ textarea{min-height:75px}
   </section>
 </main>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDLruZVIQKBQQS6fKW2ZNnCZReJEO5x04k",
+  authDomain: "minzoto-lab.firebaseapp.com",
+  projectId: "minzoto-lab",
+  storageBucket: "minzoto-lab.firebasestorage.app",
+  messagingSenderId: "591899158602",
+  appId: "1:591899158602:web:01677073ff278ab21e9eb3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const $ = id => document.getElementById(id);
+
+onAuthStateChanged(auth, user => {
+  $("loginScreen").classList.toggle("hidden", !!user);
+  $("dashboard").classList.toggle("hidden", !user);
+  $("logoutBtn").classList.toggle("hidden", !user);
+  if (user) { renderProjects(); renderServices(); }
+});
+
+window.login = async function () {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  $("loginError").textContent = "";
+  if (!email || !password) { $("loginError").textContent = "Entre ton email et ton mot de passe."; return; }
+  $("loginBtn").disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    $("loginPassword").value = "";
+  } catch (e) {
+    const msg = (e.code === "auth/too-many-requests")
+      ? "Trop de tentatives. Réessaie dans quelques minutes."
+      : "Email ou mot de passe incorrect.";
+    $("loginError").textContent = msg;
+  }
+  $("loginBtn").disabled = false;
+};
+
+window.logout = () => signOut(auth);
+
+$("loginPassword").addEventListener("keydown", e => { if (e.key === "Enter") window.login(); });
+
 const defaults = [
   {name:"Identité visuelle",category:"Logo",description:"Création de logos personnalisés"},
   {name:"Affiches et flyers",category:"Affiche",description:"Supports publicitaires créatifs"}
@@ -115,46 +187,44 @@ const defaults = [
 let projects = defaults.slice();
 let services = ["Création de logo","Affiche publicitaire","Portrait numérique"];
 
-function showTab(id,button){
-  ["projects","prices","services"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id));
-  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+window.showTab = function (id, button) {
+  ["projects","prices","services"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   button.classList.add("active");
-}
-function renderProjects(){
-  document.getElementById("projectCount").textContent=projects.length;
-  document.getElementById("projectList").innerHTML=projects.length?projects.map((p,i)=>
-    `<div class="item"><div class="row"><strong>${escapeText(p.name)}</strong><button class="small danger" onclick="deleteProject(${i})">Supprimer</button></div><div class="muted">${escapeText(p.category)} — ${escapeText(p.description)}</div></div>`
-  ).join(""):"<p class='muted'>Aucun projet pour le moment.</p>";
-}
+};
 function escapeText(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-function addProject(){
-  const name=document.getElementById("projectName").value.trim();
-  if(!name){alert("Entre le nom du projet.");return;}
-  projects.push({name,category:document.getElementById("projectCategory").value,description:document.getElementById("projectDescription").value.trim()||"Aucune description"});
-  document.getElementById("projectName").value="";
-  document.getElementById("projectDescription").value="";
+function renderProjects(){
+  $("projectCount").textContent = projects.length;
+  $("projectList").innerHTML = projects.length ? projects.map((p,i)=>
+    `<div class="item"><div class="row"><strong>${escapeText(p.name)}</strong><button class="small danger" onclick="deleteProject(${i})">Supprimer</button></div><div class="muted">${escapeText(p.category)} — ${escapeText(p.description)}</div></div>`
+  ).join("") : "<p class='muted'>Aucun projet pour le moment.</p>";
+}
+window.addProject = function () {
+  const name = $("projectName").value.trim();
+  if (!name) { alert("Entre le nom du projet."); return; }
+  projects.push({name, category:$("projectCategory").value, description:$("projectDescription").value.trim()||"Aucune description"});
+  $("projectName").value = ""; $("projectDescription").value = "";
   renderProjects();
-}
-function deleteProject(i){projects.splice(i,1);renderProjects();}
-function savePrices(){
-  document.getElementById("priceMessage").textContent="Tarifs modifiés dans cette démonstration. La sauvegarde permanente sera ajoutée plus tard.";
-}
+};
+window.deleteProject = i => { projects.splice(i,1); renderProjects(); };
+window.savePrices = function () {
+  $("priceMessage").textContent = "Tarifs modifiés dans cette démonstration. La sauvegarde permanente sera ajoutée plus tard.";
+};
 function renderServices(){
-  document.getElementById("serviceCount").textContent=services.length;
-  document.getElementById("serviceList").innerHTML=services.map((s,i)=>
+  $("serviceCount").textContent = services.length;
+  $("serviceList").innerHTML = services.map((s,i)=>
     `<div class="item row"><strong>${escapeText(s)}</strong><button class="small danger" onclick="deleteService(${i})">Supprimer</button></div>`
   ).join("");
 }
-function addService(){
-  const input=document.getElementById("newService");
-  const value=input.value.trim();
-  if(!value)return;
-  services.push(value);input.value="";renderServices();
-}
-function deleteService(i){services.splice(i,1);renderServices();}
-renderProjects();renderServices();
+window.addService = function () {
+  const input = $("newService");
+  const value = input.value.trim();
+  if (!value) return;
+  services.push(value); input.value = ""; renderServices();
+};
+window.deleteService = i => { services.splice(i,1); renderServices(); };
 </script>
 </body>
-</html>
+  </html>
