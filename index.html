@@ -112,6 +112,55 @@ footer {
   text-align: center;
   font-size: 13px;
 }
+.hidden { display: none !important; }
+.news {
+  background: var(--gold);
+  color: #171717;
+  padding: 12px 6%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.news button {
+  border: 0;
+  background: transparent;
+  color: #171717;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.member { text-align: center; }
+#memberForm { max-width: 420px; margin: 24px auto 0; text-align: left; }
+#memberForm label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
+#memberForm input[type=email],
+#memberForm input[type=text] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 16px;
+  background: white;
+}
+#memberForm label.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: normal;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+#memberForm label.check input { margin-top: 3px; flex: none; }
+#mBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
+#mBtn:disabled { opacity: .6; cursor: default; }
+.mmsg { min-height: 20px; font-size: 14px; margin: 12px 0 0; text-align: center; }
+.mmsg.ok { color: #2c6e2c; }
+.mmsg.err { color: #8d2222; }
 @media(max-width:600px) {
   header { padding: 17px 5%; }
   nav a { margin-left: 8px; font-size: 12px; }
@@ -122,11 +171,16 @@ footer {
 </style>
 </head>
 <body>
+<div id="newsBar" class="news hidden" role="status">
+  <span><b>Nouveau :</b><span id="newsText"></span></span>
+  <button id="newsClose" type="button" aria-label="Fermer l'annonce">×</button>
+</div>
 <header>
   <div class="logo">MINZOTO <span>Lab</span></div>
   <nav>
     <a href="#travaux">Travaux</a>
     <a href="#services">Tarifs</a>
+    <a href="#membre">Membre</a>
     <a href="#contact">Contact</a>
   </nav>
 </header>
@@ -207,6 +261,24 @@ footer {
     </div>
   </section>
 
+  <section id="membre" class="member">
+    <h2>Deviens membre</h2>
+    <p class="intro">Laisse ton email et ton numéro WhatsApp pour être prévenu(e) quand les tarifs changent ou que de nouveaux visuels sont ajoutés.</p>
+    <form id="memberForm" novalidate>
+      <label for="mEmail">Adresse email (Gmail)</label>
+      <input id="mEmail" type="email" autocomplete="email" placeholder="ton@gmail.com">
+      <label for="mWa">Numéro WhatsApp (avec l'indicatif, sans + ni espaces)</label>
+      <input id="mWa" type="text" inputmode="numeric" autocomplete="tel" placeholder="243812345678">
+      <label class="check" for="mConsent">
+        <input id="mConsent" type="checkbox">
+        <span>J'accepte que MINZOTO Lab me contacte par email ou WhatsApp pour me donner ses nouveautés.</span>
+      </label>
+      <button class="btn gold" id="mBtn" type="submit">Devenir membre</button>
+      <p id="mMsg" class="mmsg" role="status"></p>
+    </form>
+    <p id="mDone" class="mmsg ok hidden">Merci, tu es membre ! Tu seras prévenu(e) des nouveautés de MINZOTO Lab.</p>
+  </section>
+
   <section id="contact" class="contact">
     <h2>Un projet en tête ?</h2>
     <p class="intro">Parlons de votre prochaine création.</p>
@@ -221,7 +293,7 @@ footer {
 </footer>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy }
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const app = initializeApp({
@@ -271,7 +343,11 @@ try {
     const services = Array.isArray(d.services) ? d.services : names;
     const cards = [];
     base.forEach(([n, price]) => { if (services.includes(n)) cards.push([n, price || "Prix sur demande"]); });
-    services.filter(s => !names.includes(s)).forEach(s => cards.push([s, "Prix sur demande"]));
+    const extras = Array.isArray(d.extras) ? d.extras : [];
+    services.filter(s => !names.includes(s)).forEach(s => {
+      const x = extras.find(e => e && e.name === s);
+      cards.push([s, (x && String(x.price || "").trim()) || "Prix sur demande"]);
+    });
     if (cards.length) {
       document.getElementById("serviceGrid").innerHTML = cards.map(([n, price]) =>
         `<article class="card"><div class="card-body"><h3>${esc(n)}</h3><p class="price">${esc(price)}</p></div></article>`
@@ -279,6 +355,83 @@ try {
     }
   }
 } catch (e) { console.warn("Tarifs non chargés", e); }
+
+// Compteur de visiteurs : anonyme (identifiant aléatoire, aucune donnée personnelle).
+// Une personne est comptée une seule fois au total, et une fois par jour.
+(async () => {
+  let vid = "";
+  try {
+    if (localStorage.getItem("mz_admin")) return; // ne pas compter les visites de l'administrateur
+    vid = localStorage.getItem("mz_vid") || "";
+    if (!vid) {
+      vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem("mz_vid", vid);
+    }
+  } catch (e) { return; }
+  try {
+    if (!localStorage.getItem("mz_counted")) {
+      await setDoc(doc(db, "visitors", vid), { firstSeen: serverTimestamp() });
+      localStorage.setItem("mz_counted", "1");
+    }
+  } catch (e) { /* silencieux */ }
+  try {
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    const day = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    if (localStorage.getItem("mz_day") !== day) {
+      await setDoc(doc(db, "visits", day + "_" + vid), { day, createdAt: serverTimestamp() });
+      localStorage.setItem("mz_day", day);
+    }
+  } catch (e) { /* silencieux */ }
+})();
+
+// Annonce affichée en haut de la page (publiée depuis l'administration)
+try {
+  const n = await getDoc(doc(db, "site", "news"));
+  if (n.exists()) {
+    const nd = n.data(), text = String(nd.text || "").trim(), nid = String(nd.id || "");
+    let seen = "";
+    try { seen = localStorage.getItem("mz_news") || ""; } catch (e) {}
+    if (text && nid !== seen) {
+      document.getElementById("newsText").textContent = " " + text;
+      document.getElementById("newsBar").classList.remove("hidden");
+      document.getElementById("newsClose").addEventListener("click", () => {
+        document.getElementById("newsBar").classList.add("hidden");
+        try { localStorage.setItem("mz_news", nid); } catch (e) {}
+      });
+    }
+  }
+} catch (e) { console.warn("Annonce non chargée", e); }
+
+// Inscription des membres (email + WhatsApp)
+const memberForm = document.getElementById("memberForm");
+const mMsg = document.getElementById("mMsg");
+function memberDone() {
+  memberForm.classList.add("hidden");
+  document.getElementById("mDone").classList.remove("hidden");
+}
+function memberSay(text, ok) { mMsg.textContent = text; mMsg.className = "mmsg " + (ok ? "ok" : "err"); }
+try { if (localStorage.getItem("mz_member")) memberDone(); } catch (e) {}
+memberForm.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const email = document.getElementById("mEmail").value.trim().toLowerCase();
+  const wa = document.getElementById("mWa").value.replace(/\D/g, "");
+  if (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254) { memberSay("Entre une adresse email valide."); return; }
+  if (wa.length < 8 || wa.length > 15) { memberSay("Entre ton numéro WhatsApp avec l'indicatif (ex. 243812345678)."); return; }
+  if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
+  const btn = document.getElementById("mBtn");
+  btn.disabled = true; memberSay("Inscription en cours…", true);
+  try {
+    await setDoc(doc(db, "members", email), { email, whatsapp: wa, createdAt: serverTimestamp() });
+    try { localStorage.setItem("mz_member", "1"); } catch (e) {}
+    memberDone();
+  } catch (e) {
+    memberSay(e.code === "permission-denied"
+      ? "Cet email est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
+      : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
+  }
+  btn.disabled = false;
+});
 </script>
 </body>
                                 </html>
