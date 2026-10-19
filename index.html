@@ -263,12 +263,12 @@ footer {
 
   <section id="membre" class="member">
     <h2>Deviens membre</h2>
-    <p class="intro">Laisse ton email et ton numéro WhatsApp pour être prévenu(e) quand les tarifs changent ou que de nouveaux visuels sont ajoutés.</p>
+    <p class="intro">Laisse ton numéro WhatsApp pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ton numéro WhatsApp suffit.</p>
     <form id="memberForm" novalidate>
-      <label for="mEmail">Adresse email (Gmail)</label>
-      <input id="mEmail" type="email" autocomplete="email" placeholder="ton@gmail.com">
       <label for="mWa">Numéro WhatsApp (avec l'indicatif, sans + ni espaces)</label>
       <input id="mWa" type="text" inputmode="numeric" autocomplete="tel" placeholder="243812345678">
+      <label for="mEmail">Adresse Gmail (facultatif)</label>
+      <input id="mEmail" type="email" autocomplete="email" placeholder="ton@gmail.com">
       <label class="check" for="mConsent">
         <input id="mConsent" type="checkbox">
         <span>J'accepte que MINZOTO Lab me contacte par email ou WhatsApp pour me donner ses nouveautés.</span>
@@ -416,18 +416,20 @@ memberForm.addEventListener("submit", async ev => {
   ev.preventDefault();
   const email = document.getElementById("mEmail").value.trim().toLowerCase();
   const wa = document.getElementById("mWa").value.replace(/\D/g, "");
-  if (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254) { memberSay("Entre une adresse email valide."); return; }
   if (wa.length < 8 || wa.length > 15) { memberSay("Entre ton numéro WhatsApp avec l'indicatif (ex. 243812345678)."); return; }
+  if (email && (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254)) { memberSay("Cette adresse email n'est pas valide. Corrige-la ou laisse la case vide."); return; }
   if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
   const btn = document.getElementById("mBtn");
   btn.disabled = true; memberSay("Inscription en cours…", true);
   try {
-    await setDoc(doc(db, "members", email), { email, whatsapp: wa, createdAt: serverTimestamp() });
+    const data = { whatsapp: wa, createdAt: serverTimestamp() };
+    if (email) data.email = email;
+    await setDoc(doc(db, "members", wa), data);
     try { localStorage.setItem("mz_member", "1"); } catch (e) {}
     memberDone();
   } catch (e) {
     memberSay(e.code === "permission-denied"
-      ? "Cet email est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
+      ? "Ce numéro est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
       : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
   }
   btn.disabled = false;
