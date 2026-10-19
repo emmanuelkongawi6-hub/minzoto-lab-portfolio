@@ -185,10 +185,22 @@ textarea{min-height:75px}
       <label for="newsTextInput">Annonce</label>
       <textarea id="newsTextInput" placeholder="Ex. Les tarifs ont changé !"></textarea>
       <div class="actions">
-        <button class="gold" onclick="publishNews()">Publier l'annonce sur le site</button>
+        <button class="gold" onclick="notifyMembers()">Prévenir mes membres</button>
         <button class="danger" onclick="removeNews()">Retirer l'annonce</button>
       </div>
       <p id="newsMessage" class="muted"></p>
+      <div id="notifyBox" class="notice hidden">
+        <strong>Annonce publiée sur le site. Prévenis maintenant tes membres :</strong>
+        <div class="actions">
+          <button class="wa" id="waNextBtn" onclick="notifyWhatsApp()"></button>
+        </div>
+        <p class="muted">WhatsApp ouvre une conversation à la fois, avec ton message déjà écrit : tu appuies sur Envoyer, tu reviens ici, puis tu appuies de nouveau sur le bouton pour le membre suivant.</p>
+        <div class="actions">
+          <button class="mail" id="mailAppBtn" onclick="notifyMail(false)"></button>
+          <button class="small mail" id="mailWebBtn" onclick="notifyMail(true)">Gmail dans le navigateur</button>
+        </div>
+        <p class="muted">Gmail prépare un seul mail pour plusieurs membres à la fois (adresses en copie cachée).</p>
+      </div>
     </div>
     <div class="panel">
       <div class="row"><h2>Mes membres</h2><button class="small" onclick="copyEmails()">Copier les emails</button></div>
@@ -370,11 +382,11 @@ function newsMessage(){
 function renderMembers(){
   $("memberCount").textContent = members.length;
   $("memberList").innerHTML = members.length ? members.map(m =>
-    `<div class="item"><strong class="member-line">${escapeText(m.email)}</strong>
-      <div class="muted">WhatsApp : ${escapeText(m.whatsapp)}</div>
+    `<div class="item"><strong class="member-line">+${escapeText(m.whatsapp)}</strong>
+      <div class="muted">${m.email ? "Gmail : " + escapeText(m.email) : "Pas de Gmail (WhatsApp seulement)"}</div>
       <div class="actions">
         <button class="small wa" data-wa="${escapeText(m.whatsapp)}">WhatsApp</button>
-        <button class="small mail" data-mail="${escapeText(m.email)}">Mail</button>
+        ${m.email ? `<button class="small mail" data-mail="${escapeText(m.email)}">Mail</button>` : ""}
         <button class="small danger" data-delmem="${escapeText(m.id)}">Supprimer</button>
       </div></div>`
   ).join("") : "<p class='muted'>Aucun membre pour le moment.</p>";
@@ -396,22 +408,72 @@ $("memberList").addEventListener("click", async e => {
   }
 });
 window.copyEmails = async function () {
-  if (!members.length) { say("memberMessage","Aucun membre à copier."); return; }
-  const list = members.map(m => m.email).join(", ");
+  const emails = members.map(m => m.email).filter(Boolean);
+  if (!emails.length) { say("memberMessage","Aucun email à copier."); return; }
+  const list = emails.join(", ");
   try {
     await navigator.clipboard.writeText(list);
     say("memberMessage","Emails copiés : colle-les dans le champ « Cci » de ton mail.", true);
   } catch (e) { prompt("Copie cette liste d'emails :", list); }
 };
 window.presetNews = function (key) { $("newsTextInput").value = NEWS_PRESETS[key] || ""; };
-window.publishNews = async function () {
+/* « Prévenir mes membres » : publie l'annonce sur le site, puis prépare WhatsApp et Gmail */
+let notifyWa = [], notifyWaIdx = 0, notifyMailBatches = [], notifyMailIdx = 0;
+const MAIL_BATCH = 40;
+function chunk(arr, n){ const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; }
+function refreshNotify(){
+  const w = $("waNextBtn"), m = $("mailAppBtn"), mw = $("mailWebBtn");
+  if (!notifyWa.length) { w.disabled = true; w.textContent = "WhatsApp : aucun membre"; }
+  else if (notifyWaIdx >= notifyWa.length) { w.disabled = false; w.textContent = "WhatsApp : tous contactés (" + notifyWa.length + "). Recommencer"; }
+  else { w.disabled = false; w.textContent = "WhatsApp : écrire au membre " + (notifyWaIdx + 1) + " sur " + notifyWa.length + " (+" + notifyWa[notifyWaIdx] + ")"; }
+  if (!notifyMailBatches.length) {
+    m.disabled = true; mw.disabled = true; m.textContent = "Gmail : aucun email enregistré";
+  } else if (notifyMailIdx >= notifyMailBatches.length) {
+    m.disabled = false; mw.disabled = false; m.textContent = "Gmail : tous les mails préparés. Recommencer";
+  } else {
+    m.disabled = false; mw.disabled = false;
+    m.textContent = "Gmail : mail " + (notifyMailIdx + 1) + " sur " + notifyMailBatches.length + " (" + notifyMailBatches[notifyMailIdx].length + " membres)";
+  }
+}
+window.notifyMembers = async function () {
   const text = $("newsTextInput").value.trim();
   if (!text) { say("newsMessage","Écris d'abord ton annonce."); return; }
   try {
     await setDoc(doc(db,"site","news"), { text, id: String(Date.now()), createdAt: serverTimestamp() });
     publishedNews = text;
-    say("newsMessage","Annonce publiée : elle s'affiche en haut du site.", true);
-  } catch (e) { say("newsMessage","Échec : " + (e.code || e.message)); }
+  } catch (e) { say("newsMessage","Échec de la publication : " + (e.code || e.message)); return; }
+  await loadMembers();
+  notifyWa = members.map(m => String(m.whatsapp || "").replace(/\D/g,"")).filter(n => n.length >= 8);
+  const emails = members.map(m => String(m.email || "").trim()).filter(e => e.indexOf("@") > 0);
+  notifyMailBatches = chunk(Array.from(new Set(emails)), MAIL_BATCH);
+  notifyWaIdx = 0; notifyMailIdx = 0;
+  $("notifyBox").classList.remove("hidden");
+  refreshNotify();
+  say("newsMessage", members.length
+    ? "Annonce publiée sur le site. Choisis ci-dessous comment prévenir tes membres."
+    : "Annonce publiée sur le site. Tu n'as pas encore de membres à prévenir.", true);
+};
+window.notifyWhatsApp = function () {
+  if (!notifyWa.length) return;
+  if (notifyWaIdx >= notifyWa.length) { notifyWaIdx = 0; refreshNotify(); return; }
+  window.open("https://wa.me/" + notifyWa[notifyWaIdx] + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+  notifyWaIdx++;
+  refreshNotify();
+};
+window.notifyMail = function (web) {
+  if (!notifyMailBatches.length) return;
+  if (notifyMailIdx >= notifyMailBatches.length) { notifyMailIdx = 0; refreshNotify(); return; }
+  const list = notifyMailBatches[notifyMailIdx];
+  const subject = "Du nouveau chez MINZOTO Lab", body = newsMessage();
+  if (web) {
+    window.open("https://mail.google.com/mail/?view=cm&fs=1&bcc=" + encodeURIComponent(list.join(",")) +
+      "&su=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body), "_blank", "noopener");
+  } else {
+    location.href = "mailto:?bcc=" + list.map(e => encodeURI(e)).join(",") +
+      "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  }
+  notifyMailIdx++;
+  refreshNotify();
 };
 window.removeNews = async function () {
   try {
