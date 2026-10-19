@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MINZOTO Lab | Studio créatif</title>
+<meta name="description" content="MINZOTO Lab, studio créatif : logos, affiches, portraits numériques et retouche photo.">
+<meta name="theme-color" content="#171717">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="MINZOTO Lab">
+<meta property="og:title" content="MINZOTO Lab | Studio créatif">
+<meta property="og:description" content="Logos, affiches, portraits numériques et retouche photo. Demande ton devis et deviens membre pour être prévenu(e) des nouveautés.">
+<meta property="og:url" content="https://emmanuelkongawi6-hub.github.io/minzoto-lab-portfolio/">
+<meta property="og:image" content="https://emmanuelkongawi6-hub.github.io/minzoto-lab-portfolio/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 :root {
   --gold: #e7b928;
@@ -134,10 +146,12 @@ footer {
   padding: 0 4px;
 }
 .member { text-align: center; }
-#memberForm { max-width: 420px; margin: 24px auto 0; text-align: left; }
-#memberForm label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
-#memberForm input[type=email],
-#memberForm input[type=text] {
+.form { max-width: 420px; margin: 24px auto 0; text-align: left; }
+.form label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
+.form input[type=email],
+.form input[type=text],
+.form select,
+.form textarea {
   width: 100%;
   padding: 12px;
   border: 1px solid #ccc;
@@ -146,7 +160,9 @@ footer {
   font-size: 16px;
   background: white;
 }
-#memberForm label.check {
+.form textarea { min-height: 110px; resize: vertical; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.form label.check {
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -155,15 +171,53 @@ footer {
   color: #555;
   line-height: 1.5;
 }
-#memberForm label.check input { margin-top: 3px; flex: none; }
-#mBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
-#mBtn:disabled { opacity: .6; cursor: default; }
+.form label.check input { margin-top: 3px; flex: none; }
+#mBtn, #qBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
+#mBtn:disabled, #qBtn:disabled { opacity: .6; cursor: default; }
 .hint { font-size: 13px; color: #777; margin: 8px 0 0; line-height: 1.5; }
 .mmsg { min-height: 20px; font-size: 14px; margin: 12px 0 0; text-align: center; }
 .mmsg.ok { color: #2c6e2c; }
 .mmsg.err { color: #8d2222; }
+.quote, .member { text-align: center; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.chip {
+  border: 1px solid #ddd; background: white; color: #333;
+  padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.chip.active { background: var(--dark); color: white; border-color: var(--dark); }
+.art.has-img { cursor: zoom-in; }
+.viewer {
+  position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
+}
+.viewer img { max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 6px; }
+.viewer .cap { color: #eee; text-align: center; margin-top: 12px; max-width: 640px; font-size: 14px; line-height: 1.5; }
+.viewer button {
+  position: absolute; border: 0; background: rgba(255,255,255,.18); color: white;
+  width: 44px; height: 44px; border-radius: 50%; font-size: 26px; line-height: 1; cursor: pointer;
+}
+.viewer .x { top: 14px; right: 14px; }
+.viewer .prev { left: 10px; top: 50%; }
+.viewer .next { right: 10px; top: 50%; }
+.wa-float {
+  position: fixed; right: 16px; bottom: 16px; z-index: 40;
+  background: #25d366; color: #fff; padding: 13px 18px; border-radius: 999px;
+  text-decoration: none; font-weight: bold; font-size: 15px;
+  display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.28);
+}
+.wa-float svg { width: 22px; height: 22px; flex: none; }
+.promo { background: #fff6d8; }
+.promo-card { border-color: #ecd58a; }
+.badge {
+  display: inline-block; background: var(--gold); color: #171717;
+  font-weight: bold; font-size: 12px; padding: 4px 9px; border-radius: 999px; margin-bottom: 8px;
+}
+.when { color: #8d2222; font-weight: bold; font-size: 13px; margin: 8px 0 0; }
+.avis { font-style: italic; line-height: 1.7; color: #444; margin: 0 0 12px; }
+.who { font-weight: bold; margin: 0; color: #9c7810; font-size: 14px; }
 @media(max-width:600px) {
-  header { padding: 17px 5%; }
+  header { padding: 17px 5%; flex-wrap: wrap; gap: 8px 12px; }
+  footer { padding-bottom: 84px; }
   nav a { margin-left: 8px; font-size: 12px; }
   .logo { font-size: 19px; }
   .hero { padding: 55px 6%; }
@@ -181,6 +235,7 @@ footer {
   <nav>
     <a href="#travaux">Travaux</a>
     <a href="#services">Tarifs</a>
+    <a href="#devis">Devis</a>
     <a href="#membre">Membre</a>
     <a href="#contact">Contact</a>
   </nav>
@@ -210,7 +265,8 @@ footer {
 
   <section id="travaux">
     <h2>Quelques créations</h2>
-    <p class="intro">Un aperçu de l'univers créatif de MINZOTO Lab.</p>
+    <p class="intro">Un aperçu de l'univers créatif de MINZOTO Lab. Touche une création pour la voir en grand.</p>
+    <div class="chips hidden" id="catChips"></div>
     <div class="grid" id="projectGrid">
       <article class="card">
         <div class="art">LOGO DESIGN</div>
@@ -243,6 +299,12 @@ footer {
     </div>
   </section>
 
+  <section class="promo hidden" id="promos">
+    <h2>Promotions en cours</h2>
+    <p class="intro">Profite-en avant la fin de l'offre.</p>
+    <div class="grid" id="promoGrid"></div>
+  </section>
+
   <section class="services" id="services">
     <h2>Services & tarifs</h2>
     <p class="intro">Voici des exemples de tarifs. Ils seront à personnaliser.</p>
@@ -262,14 +324,43 @@ footer {
     </div>
   </section>
 
+  <section id="devis" class="quote">
+    <h2>Demander un devis</h2>
+    <p class="intro">Décris ton projet : tu reçois une réponse sur WhatsApp.</p>
+    <form id="quoteForm" class="form" novalidate>
+      <label for="qName">Nom et prénom</label>
+      <input id="qName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
+      <label for="qWa">Ton numéro WhatsApp</label>
+      <input id="qWa" type="text" inputmode="tel" autocomplete="tel" placeholder="Ex. 081 234 5678">
+      <p class="hint">Écris-le comme d'habitude. Hors RDC, commence par + et l'indicatif de ton pays.</p>
+      <label for="qService">Service souhaité</label>
+      <select id="qService"></select>
+      <label for="qBudget">Budget (facultatif)</label>
+      <input id="qBudget" type="text" placeholder="Ex. 50 $" maxlength="60">
+      <label for="qDelay">Délai souhaité (facultatif)</label>
+      <input id="qDelay" type="text" placeholder="Ex. pour vendredi" maxlength="60">
+      <label for="qText">Décris ton projet</label>
+      <textarea id="qText" placeholder="Ex. Je voudrais un logo pour mon salon de coiffure, en noir et or." maxlength="1500"></textarea>
+      <input class="hp" id="qHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn gold" id="qBtn" type="submit">Envoyer ma demande</button>
+      <p id="qOut" class="mmsg" role="status"></p>
+    </form>
+  </section>
+
+  <section id="avis" class="hidden">
+    <h2>Ils m'ont fait confiance</h2>
+    <div class="grid" id="avisGrid"></div>
+  </section>
+
   <section id="membre" class="member">
     <h2>Deviens membre</h2>
     <p class="intro">Laisse ton numéro WhatsApp ou ton compte Facebook (ou les deux) pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ce n'est pas grave, il est facultatif.</p>
-    <form id="memberForm" novalidate>
+    <form id="memberForm" class="form" novalidate>
       <label for="mName">Nom et prénom</label>
       <input id="mName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
-      <label for="mWa">Numéro WhatsApp (avec l'indicatif, sans + ni espaces)</label>
-      <input id="mWa" type="text" inputmode="numeric" autocomplete="tel" placeholder="243812345678">
+      <label for="mWa">Numéro WhatsApp</label>
+      <input id="mWa" type="text" inputmode="tel" autocomplete="tel" placeholder="Ex. 081 234 5678">
+      <p class="hint">Écris-le comme d'habitude. Si tu es hors de la RDC, commence par + et l'indicatif de ton pays (ex. +33 6 12 34 56 78).</p>
       <label for="mFb">Compte Facebook (lien de ton profil ou ton nom Facebook)</label>
       <input id="mFb" type="text" autocomplete="off" placeholder="facebook.com/ton.profil" maxlength="200">
       <p class="hint">Remplis au moins WhatsApp ou Facebook. Le Gmail est facultatif.</p>
@@ -294,12 +385,26 @@ footer {
   </section>
 </main>
 
+<div id="viewer" class="viewer hidden" role="dialog" aria-modal="true" aria-label="Création en grand">
+  <button class="x" id="vClose" type="button" aria-label="Fermer">×</button>
+  <button class="prev" id="vPrev" type="button" aria-label="Création précédente">‹</button>
+  <img id="vImg" alt="">
+  <div class="cap" id="vCap"></div>
+  <button class="next" id="vNext" type="button" aria-label="Création suivante">›</button>
+</div>
+
+<a id="waFloat" class="wa-float" target="_blank" rel="noopener" aria-label="Discuter sur WhatsApp"
+   href="https://wa.me/243835263914?text=Bonjour%20MINZOTO%20Lab%2C%20j%27aimerais%20discuter%20d%27un%20projet.">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="#fff"/></svg>
+  <span>WhatsApp</span>
+</a>
+
 <footer id="footerText">
   © 2026 MINZOTO Lab — Studio créatif
 </footer>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, serverTimestamp }
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, addDoc, query, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const app = initializeApp({
@@ -311,20 +416,99 @@ const app = initializeApp({
 const db = getFirestore(app);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-// Galerie : les projets ajoutés dans l'administration
+// Numéro WhatsApp écrit comme d'habitude (081 234 5678, +243 81 234 5678, 0033 6…) → chiffres avec indicatif.
+// Sans indicatif, c'est l'indicatif de la RDC (243) qui est ajouté.
+function normPhone(raw) {
+  const s = String(raw || "").trim();
+  const d = s.replace(/\D/g, "");
+  if (!d) return "";
+  if (s.charAt(0) === "+") return d;
+  if (d.slice(0, 2) === "00") return d.slice(2);
+  if (d.charAt(0) === "0") return "243" + d.slice(1);
+  if (d.length === 9) return "243" + d;
+  return d;
+}
+function phoneOk(n) { return /^\d{8,15}$/.test(n) && (n.slice(0, 3) !== "243" || n.length === 12); }
+["mWa", "qWa"].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener("blur", () => { const n = normPhone(el.value); if (el.value.trim() && phoneOk(n)) el.value = "+" + n; });
+});
+
+// Galerie : les projets ajoutés dans l'administration (filtre par catégorie + visionneuse)
+let works = [], shown = [], curCat = "Tout", viewerIdx = -1;
+const hasImg = p => !!(p && p.image && /^data:image\//.test(p.image));
+function renderGallery() {
+  shown = curCat === "Tout" ? works : works.filter(p => p.category === curCat);
+  document.getElementById("projectGrid").innerHTML = shown.map((p, i) => {
+    const has = hasImg(p);
+    const img = has
+      ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">`
+      : esc((p.category || "").toUpperCase());
+    return `<article class="card"><div class="art${has ? " has-img" : ""}"${has ? ` data-view="${i}"` : ""}>${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
+  }).join("");
+}
+function renderChips() {
+  const cats = Array.from(new Set(works.map(p => p.category).filter(Boolean)));
+  const box = document.getElementById("catChips");
+  if (cats.length < 2) { box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  box.innerHTML = ["Tout"].concat(cats).map(c =>
+    `<button type="button" class="chip${c === curCat ? " active" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`
+  ).join("");
+}
 try {
   const snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
-  if (!snap.empty) {
-    document.getElementById("projectGrid").innerHTML = snap.docs.map(d => {
-      const p = d.data();
-      const has = p.image && /^data:image\//.test(p.image);
-      const img = has
-        ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">`
-        : esc((p.category || "").toUpperCase());
-      return `<article class="card"><div class="art${has ? " has-img" : ""}">${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
-    }).join("");
-  }
+  if (!snap.empty) { works = snap.docs.map(d => d.data()); renderChips(); renderGallery(); }
 } catch (e) { console.warn("Projets non chargés", e); }
+document.getElementById("catChips").addEventListener("click", e => {
+  const c = e.target.getAttribute && e.target.getAttribute("data-cat");
+  if (c === null || c === undefined) return;
+  curCat = c; renderChips(); renderGallery();
+});
+function showViewer(i) {
+  const p = shown[i];
+  if (!hasImg(p)) return;
+  viewerIdx = i;
+  document.getElementById("vImg").src = p.image;
+  document.getElementById("vImg").alt = p.name || "";
+  const desc = p.description && p.description !== "Aucune description" ? " — " + p.description : "";
+  document.getElementById("vCap").textContent = (p.name || "") + desc;
+  document.getElementById("viewer").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+function stepViewer(dir) {
+  let i = viewerIdx;
+  for (let k = 0; k < shown.length; k++) {
+    i = (i + dir + shown.length) % shown.length;
+    if (hasImg(shown[i])) { showViewer(i); return; }
+  }
+}
+function closeViewer() {
+  document.getElementById("viewer").classList.add("hidden");
+  document.getElementById("vImg").removeAttribute("src");
+  document.body.style.overflow = "";
+}
+document.getElementById("projectGrid").addEventListener("click", e => {
+  const el = e.target.closest && e.target.closest("[data-view]");
+  if (el) showViewer(Number(el.getAttribute("data-view")));
+});
+document.getElementById("vClose").addEventListener("click", closeViewer);
+document.getElementById("vPrev").addEventListener("click", () => stepViewer(-1));
+document.getElementById("vNext").addEventListener("click", () => stepViewer(1));
+document.getElementById("viewer").addEventListener("click", e => { if (e.target.id === "viewer") closeViewer(); });
+document.addEventListener("keydown", e => {
+  if (document.getElementById("viewer").classList.contains("hidden")) return;
+  if (e.key === "Escape") closeViewer();
+  else if (e.key === "ArrowLeft") stepViewer(-1);
+  else if (e.key === "ArrowRight") stepViewer(1);
+});
+
+// Liste des services proposée dans le formulaire de devis
+function fillQuoteServices(list) {
+  document.getElementById("qService").innerHTML = list.concat(["Autre (je l'explique ci-dessous)"])
+    .map(n => `<option>${esc(n)}</option>`).join("");
+}
+fillQuoteServices(["Création de logo", "Affiche publicitaire", "Portrait numérique"]);
 
 // Tarifs et services
 try {
@@ -358,9 +542,84 @@ try {
       document.getElementById("serviceGrid").innerHTML = cards.map(([n, price]) =>
         `<article class="card"><div class="card-body"><h3>${esc(n)}</h3><p class="price">${esc(price)}</p></div></article>`
       ).join("");
+      fillQuoteServices(cards.map(c => c[0]));
     }
   }
 } catch (e) { console.warn("Tarifs non chargés", e); }
+// Le bouton WhatsApp flottant utilise le même numéro que le bouton « Contacter sur WhatsApp »
+document.getElementById("waFloat").href = document.getElementById("waBtn").href;
+
+// Promotions en cours : une offre dont la date de fin est passée disparaît toute seule
+try {
+  const snap = await getDocs(query(collection(db,"offers"), orderBy("createdAt","desc")));
+  const now = new Date(), pad = n => String(n).padStart(2, "0");
+  const today = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+  const active = snap.docs.map(d => d.data()).filter(o => o.title && (!o.endDate || o.endDate >= today));
+  if (active.length) {
+    document.getElementById("promoGrid").innerHTML = active.map(o => {
+      let when = "";
+      if (o.endDate) {
+        const left = Math.ceil((new Date(o.endDate + "T23:59:59") - now) / 86400000);
+        const [y, m, d] = o.endDate.split("-");
+        when = left <= 1 ? "Dernier jour !" : left <= 7 ? "Plus que " + left + " jours" : "Jusqu'au " + d + "/" + m + "/" + y;
+      }
+      return `<article class="card promo-card"><div class="card-body"><span class="badge">PROMO</span><h3>${esc(o.title)}</h3>`
+        + (o.description ? `<p class="intro">${esc(o.description)}</p>` : "")
+        + (o.price ? `<p class="price">${esc(o.price)}</p>` : "")
+        + (when ? `<p class="when">${esc(when)}</p>` : "")
+        + `</div></article>`;
+    }).join("");
+    document.getElementById("promos").classList.remove("hidden");
+  }
+} catch (e) { console.warn("Promotions non chargées", e); }
+
+// Témoignages de clients
+try {
+  const snap = await getDocs(query(collection(db,"testimonials"), orderBy("createdAt","desc")));
+  if (!snap.empty) {
+    document.getElementById("avisGrid").innerHTML = snap.docs.map(d => {
+      const t = d.data();
+      return `<article class="card"><div class="card-body"><p class="avis">« ${esc(t.text)} »</p><p class="who">${esc(t.name)}${t.role ? " · " + esc(t.role) : ""}</p></div></article>`;
+    }).join("");
+    document.getElementById("avis").classList.remove("hidden");
+  }
+} catch (e) { console.warn("Témoignages non chargés", e); }
+
+// Demande de devis (reçue dans l'administration)
+const quoteForm = document.getElementById("quoteForm");
+function qSay(text, ok) { const o = document.getElementById("qOut"); o.textContent = text; o.className = "mmsg " + (ok ? "ok" : "err"); }
+quoteForm.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (document.getElementById("qHp").value) { qSay("Merci ! Ta demande est bien reçue.", true); return; } // anti-robot
+  const name = document.getElementById("qName").value.trim().replace(/\s+/g, " ");
+  const wa = normPhone(document.getElementById("qWa").value);
+  const service = document.getElementById("qService").value.slice(0, 80);
+  const budget = document.getElementById("qBudget").value.trim().slice(0, 60);
+  const delay = document.getElementById("qDelay").value.trim().slice(0, 60);
+  const message = document.getElementById("qText").value.trim();
+  if (name.length < 2 || name.length > 80) { qSay("Entre ton nom et ton prénom."); return; }
+  if (!phoneOk(wa)) { qSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
+  if (message.length < 5) { qSay("Décris ton projet en quelques mots."); return; }
+  if (message.length > 1500) { qSay("Ta description est trop longue (1500 caractères maximum)."); return; }
+  try {
+    const last = Number(localStorage.getItem("mz_quote_t") || 0);
+    if (Date.now() - last < 60000) { qSay("Ta demande vient d'être envoyée. Attends une minute avant d'en envoyer une autre."); return; }
+  } catch (e) {}
+  const btn = document.getElementById("qBtn");
+  btn.disabled = true; qSay("Envoi en cours…", true);
+  try {
+    const data = { name, whatsapp: wa, service, message, status: "new", createdAt: serverTimestamp() };
+    if (budget) data.budget = budget;
+    if (delay) data.delay = delay;
+    await addDoc(collection(db, "quotes"), data);
+    try { localStorage.setItem("mz_quote_t", String(Date.now())); } catch (e) {}
+    ["qBudget", "qDelay", "qText"].forEach(id => { document.getElementById(id).value = ""; });
+    qSay("Merci ! Ta demande est bien reçue. Tu recevras une réponse sur WhatsApp.", true);
+  } catch (e) {
+    qSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi directement sur WhatsApp.");
+  }
+  btn.disabled = false;
+});
 
 // Compteur de visiteurs : anonyme (identifiant aléatoire, aucune donnée personnelle).
 // Une personne est comptée une seule fois au total, et une fois par jour.
@@ -434,12 +693,12 @@ function fbHandle(v) {
 memberForm.addEventListener("submit", async ev => {
   ev.preventDefault();
   const email = document.getElementById("mEmail").value.trim().toLowerCase();
-  const wa = document.getElementById("mWa").value.replace(/\D/g, "");
+  const wa = normPhone(document.getElementById("mWa").value);
   const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
   if (name.length < 2 || name.length > 80) { memberSay("Entre ton nom et ton prénom."); return; }
   const rawWa = document.getElementById("mWa").value.trim();
   const fbRaw = document.getElementById("mFb").value.trim();
-  if (rawWa && (wa.length < 8 || wa.length > 15)) { memberSay("Ton numéro WhatsApp doit comporter l'indicatif (ex. 243812345678)."); return; }
+  if (rawWa && !phoneOk(wa)) { memberSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
   if (!rawWa && !fbRaw) { memberSay("Entre ton numéro WhatsApp ou ton compte Facebook (au moins un des deux)."); return; }
   if (fbRaw && fbRaw.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
   const fbId = fbHandle(fbRaw);
