@@ -43,6 +43,12 @@ textarea{min-height:75px}
 .proj{display:flex;gap:14px;align-items:center}
 .proj .info{flex:1;min-width:0}
 .preview{display:block;max-width:100%;max-height:240px;margin-top:10px;border-radius:8px;border:1px solid #eee}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chips button{background:#f0f0ee;color:#333;border:1px solid #ddd}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.wa{background:#25d366;color:#fff}
+.mail{background:#222;color:#fff}
+.member-line{word-break:break-all}
 @media(max-width:520px){main{padding:15px}.stat{grid-template-columns:1fr 1fr}.panel{padding:14px}}
 </style>
 </head>
@@ -81,11 +87,20 @@ textarea{min-height:75px}
     <div class="panel"><div class="muted">Services</div><div class="number" id="serviceCount">0</div></div>
   </div>
 
+  <div class="stat">
+    <div class="panel"><div class="muted">Visiteurs (total)</div><div class="number" id="visitorTotal">…</div></div>
+    <div class="panel"><div class="muted">Visiteurs aujourd'hui</div><div class="number" id="visitorToday">…</div></div>
+    <div class="panel"><div class="muted">Visites (7 derniers jours)</div><div class="number" id="visitWeek">…</div></div>
+    <div class="panel"><div class="muted">Membres</div><div class="number" id="memberCount">0</div></div>
+  </div>
+  <p id="statsMessage" class="muted"></p>
+
   <nav>
     <button class="active" onclick="showTab('projects',this)">Mes projets</button>
     <button onclick="showTab('prices',this)">Mes tarifs</button>
     <button onclick="showTab('services',this)">Mes services</button>
     <button onclick="showTab('texts',this)">Textes du site</button>
+    <button onclick="showTab('members',this)">Membres</button>
   </nav>
 
   <section id="projects">
@@ -122,6 +137,7 @@ textarea{min-height:75px}
       <input id="posterPrice" value="Prix sur demande">
       <label for="portraitPrice">Portrait numérique</label>
       <input id="portraitPrice" value="Prix sur demande">
+      <div id="extraPriceList"></div>
       <button class="gold" onclick="savePrices()" style="margin-top:16px">Enregistrer les tarifs</button>
       <p id="priceMessage" class="muted"></p>
     </div>
@@ -156,6 +172,30 @@ textarea{min-height:75px}
       <p id="textMessage" class="muted"></p>
     </div>
   </section>
+
+  <section id="members" class="hidden">
+    <div class="panel">
+      <h2>Prévenir mes membres</h2>
+      <p class="muted">Écris ton annonce : elle s'affiche en haut du site pour les visiteurs. Ensuite, tu peux aussi prévenir chaque membre par WhatsApp ou par mail avec le même message.</p>
+      <div class="chips">
+        <button class="small" onclick="presetNews('tarifs')">Tarifs mis à jour</button>
+        <button class="small" onclick="presetNews('visuels')">Nouveaux visuels</button>
+        <button class="small" onclick="presetNews('offre')">Nouvelle offre</button>
+      </div>
+      <label for="newsTextInput">Annonce</label>
+      <textarea id="newsTextInput" placeholder="Ex. Les tarifs ont changé !"></textarea>
+      <div class="actions">
+        <button class="gold" onclick="publishNews()">Publier l'annonce sur le site</button>
+        <button class="danger" onclick="removeNews()">Retirer l'annonce</button>
+      </div>
+      <p id="newsMessage" class="muted"></p>
+    </div>
+    <div class="panel">
+      <div class="row"><h2>Mes membres</h2><button class="small" onclick="copyEmails()">Copier les emails</button></div>
+      <p id="memberMessage" class="muted"></p>
+      <div id="memberList"></div>
+    </div>
+  </section>
 </main>
 
 <script type="module">
@@ -163,7 +203,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc,
-  query, orderBy, serverTimestamp }
+  query, orderBy, where, getCountFromServer, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -182,11 +222,24 @@ const $ = id => document.getElementById(id);
 
 const DEFAULT_SERVICES = ["Création de logo","Affiche publicitaire","Portrait numérique"];
 let projects = [];
-let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", portrait:"Prix sur demande"}, services: DEFAULT_SERVICES.slice(),
+let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", portrait:"Prix sur demande"}, services: DEFAULT_SERVICES.slice(), extras: [],
   texts: { heroTitle1:"Les idées deviennent", heroTitle2:"des créations.",
     heroText:"Bienvenue chez MINZOTO Lab, votre studio créatif. Identité visuelle, affiches, portraits numériques et retouche photo pour donner vie à vos idées.",
     whatsapp:"243835263914", footer:"© 2026 MINZOTO Lab — Studio créatif" } };
 let photoData = "";
+let members = [];
+const SITE_URL = new URL("./", location.href).href;
+const NEWS_PRESETS = {
+  tarifs: "Les tarifs ont été mis à jour. Viens les découvrir sur le site !",
+  visuels: "De nouveaux visuels viennent d'être ajoutés. Viens les voir sur le site !",
+  offre: "Nouvelle offre chez MINZOTO Lab. Viens la découvrir sur le site !"
+};
+let publishedNews = "";
+// Propose un texte d'annonce sans écraser un brouillon écrit par l'administrateur
+function suggestNews(text){
+  const cur = $("newsTextInput").value.trim();
+  if (!cur || cur === publishedNews) $("newsTextInput").value = text;
+}
 
 function escapeText(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -200,7 +253,11 @@ onAuthStateChanged(auth, user => {
   $("loginScreen").classList.toggle("hidden", !!user);
   $("dashboard").classList.toggle("hidden", !user);
   $("logoutBtn").classList.toggle("hidden", !user);
-  if (user) loadAll();
+  if (user) {
+    // ce navigateur appartient à l'administrateur : ses visites ne sont pas comptées
+    try { localStorage.setItem("mz_admin", "1"); } catch (e) {}
+    loadAll();
+  }
 });
 
 window.login = async function () {
@@ -245,6 +302,7 @@ async function loadAll(){
       const d = c.data();
       config.prices = Object.assign(config.prices, d.prices || {});
       if (Array.isArray(d.services)) config.services = d.services;
+      if (Array.isArray(d.extras)) config.extras = d.extras;
       config.texts = Object.assign(config.texts, d.texts || {});
     }
   } catch (e) { /* config pas encore créée */ }
@@ -255,10 +313,117 @@ async function loadAll(){
   $("heroTitle1").value = T.heroTitle1; $("heroTitle2").value = T.heroTitle2;
   $("heroText").value = T.heroText; $("whatsapp").value = T.whatsapp; $("footerTxt").value = T.footer;
   renderProjects(); renderServices();
+  loadStats();
+  loadMembers();
 }
 
+/* ---------- Visiteurs ---------- */
+function dayKey(back){
+  const d = new Date(); d.setDate(d.getDate() - back);
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+async function loadStats(){
+  try {
+    const [total, today, week] = await Promise.all([
+      getCountFromServer(collection(db,"visitors")),
+      getCountFromServer(query(collection(db,"visits"), where("day","==",dayKey(0)))),
+      getCountFromServer(query(collection(db,"visits"), where("day",">=",dayKey(6))))
+    ]);
+    $("visitorTotal").textContent = total.data().count;
+    $("visitorToday").textContent = today.data().count;
+    $("visitWeek").textContent = week.data().count;
+    $("statsMessage").textContent = "";
+  } catch (e) {
+    ["visitorTotal","visitorToday","visitWeek"].forEach(id => $(id).textContent = "—");
+    $("statsMessage").textContent = e.code === "permission-denied"
+      ? "Compteur indisponible : publie les nouvelles règles Firestore (fichier firestore.rules)."
+      : "Compteur indisponible : " + (e.code || e.message);
+  }
+}
+
+/* ---------- Membres et annonces ---------- */
+async function loadMembers(){
+  try {
+    const snap = await getDocs(query(collection(db,"members"), orderBy("createdAt","desc")));
+    members = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    say("memberMessage", "", true);
+  } catch (e) {
+    members = [];
+    say("memberMessage", e.code === "permission-denied"
+      ? "Accès refusé : publie les nouvelles règles Firestore (fichier firestore.rules)."
+      : "Impossible de charger les membres : " + (e.code || e.message));
+  }
+  renderMembers();
+  try {
+    const n = await getDoc(doc(db,"site","news"));
+    if (n.exists() && !$("newsTextInput").value) {
+      publishedNews = String(n.data().text || "").trim();
+      $("newsTextInput").value = publishedNews;
+    }
+  } catch (e) { /* pas d'annonce */ }
+}
+function newsMessage(){
+  const t = $("newsTextInput").value.trim() || "Du nouveau chez MINZOTO Lab !";
+  return t + "\n" + SITE_URL;
+}
+function renderMembers(){
+  $("memberCount").textContent = members.length;
+  $("memberList").innerHTML = members.length ? members.map(m =>
+    `<div class="item"><strong class="member-line">${escapeText(m.email)}</strong>
+      <div class="muted">WhatsApp : ${escapeText(m.whatsapp)}</div>
+      <div class="actions">
+        <button class="small wa" data-wa="${escapeText(m.whatsapp)}">WhatsApp</button>
+        <button class="small mail" data-mail="${escapeText(m.email)}">Mail</button>
+        <button class="small danger" data-delmem="${escapeText(m.id)}">Supprimer</button>
+      </div></div>`
+  ).join("") : "<p class='muted'>Aucun membre pour le moment.</p>";
+}
+$("memberList").addEventListener("click", async e => {
+  const g = n => e.target.getAttribute && e.target.getAttribute(n);
+  const wa = g("data-wa"), mail = g("data-mail"), del = g("data-delmem");
+  if (wa) {
+    window.open("https://wa.me/" + wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+  } else if (mail) {
+    location.href = "mailto:" + mail + "?subject=" + encodeURIComponent("Du nouveau chez MINZOTO Lab") + "&body=" + encodeURIComponent(newsMessage());
+  } else if (del) {
+    if (!confirm("Supprimer ce membre ?")) return;
+    try {
+      await deleteDoc(doc(db,"members",del));
+      members = members.filter(m => m.id !== del);
+      renderMembers();
+    } catch (err) { say("memberMessage","Suppression impossible : " + (err.code || err.message)); }
+  }
+});
+window.copyEmails = async function () {
+  if (!members.length) { say("memberMessage","Aucun membre à copier."); return; }
+  const list = members.map(m => m.email).join(", ");
+  try {
+    await navigator.clipboard.writeText(list);
+    say("memberMessage","Emails copiés : colle-les dans le champ « Cci » de ton mail.", true);
+  } catch (e) { prompt("Copie cette liste d'emails :", list); }
+};
+window.presetNews = function (key) { $("newsTextInput").value = NEWS_PRESETS[key] || ""; };
+window.publishNews = async function () {
+  const text = $("newsTextInput").value.trim();
+  if (!text) { say("newsMessage","Écris d'abord ton annonce."); return; }
+  try {
+    await setDoc(doc(db,"site","news"), { text, id: String(Date.now()), createdAt: serverTimestamp() });
+    publishedNews = text;
+    say("newsMessage","Annonce publiée : elle s'affiche en haut du site.", true);
+  } catch (e) { say("newsMessage","Échec : " + (e.code || e.message)); }
+};
+window.removeNews = async function () {
+  try {
+    await deleteDoc(doc(db,"site","news"));
+    $("newsTextInput").value = "";
+    publishedNews = "";
+    say("newsMessage","Annonce retirée du site.", true);
+  } catch (e) { say("newsMessage","Échec : " + (e.code || e.message)); }
+};
+
 window.showTab = function (id, button) {
-  ["projects","prices","services","texts"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  ["projects","prices","services","texts","members"].forEach(x => $(x).classList.toggle("hidden", x !== id));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   button.classList.add("active");
 };
@@ -343,7 +508,8 @@ window.addProject = async function () {
     $("projectPhoto").value = ""; photoData = "";
     $("photoPreview").classList.add("hidden");
     renderProjects();
-    say("projectMessage","Projet ajouté et publié sur le site.", true);
+    say("projectMessage","Projet ajouté et publié sur le site. Pense à prévenir tes membres (onglet Membres).", true);
+    suggestNews(NEWS_PRESETS.visuels);
   } catch (e) {
     say("projectMessage","Échec de l'enregistrement : " + (e.code || e.message));
   }
@@ -353,9 +519,11 @@ window.addProject = async function () {
 /* ---------- Tarifs ---------- */
 window.savePrices = async function () {
   config.prices = { logo: $("logoPrice").value.trim(), poster: $("posterPrice").value.trim(), portrait: $("portraitPrice").value.trim() };
+  readExtraInputs();
   try {
     await setDoc(doc(db,"site","config"), config, {merge:true});
-    say("priceMessage","Tarifs enregistrés et publiés.", true);
+    say("priceMessage","Tarifs enregistrés et publiés. Pense à prévenir tes membres (onglet Membres).", true);
+    suggestNews(NEWS_PRESETS.tarifs);
   } catch (e) { say("priceMessage","Échec : " + (e.code || e.message)); }
 };
 
@@ -377,6 +545,21 @@ function renderServices(){
   $("serviceList").innerHTML = config.services.map((s,i) =>
     `<div class="item row"><strong>${escapeText(s)}</strong><button class="small danger" data-delsvc="${i}">Supprimer</button></div>`
   ).join("");
+  renderPriceExtras();
+}
+/* Prix des services ajoutés : une case par service dans « Mes tarifs » */
+function extraServices(){ return config.services.filter(s => !DEFAULT_SERVICES.includes(s)); }
+function readExtraInputs(){
+  const map = {};
+  (config.extras || []).forEach(x => { if (x && x.name) map[x.name] = x.price; });
+  document.querySelectorAll(".extra-price").forEach(i => { map[i.getAttribute("data-svc")] = i.value.trim(); });
+  config.extras = extraServices().map(n => ({ name: n, price: map[n] || "" }));
+}
+function renderPriceExtras(){
+  readExtraInputs();
+  $("extraPriceList").innerHTML = config.extras.map((x, i) =>
+    `<label for="extraPrice${i}">${escapeText(x.name)}</label><input class="extra-price" id="extraPrice${i}" data-svc="${escapeText(x.name)}" value="${escapeText(x.price || "Prix sur demande")}">`
+  ).join("");
 }
 $("serviceList").addEventListener("click", async e => {
   const i = e.target.getAttribute && e.target.getAttribute("data-delsvc");
@@ -385,17 +568,22 @@ $("serviceList").addEventListener("click", async e => {
   await saveServices();
 });
 async function saveServices(){
+  readExtraInputs();
   try {
     await setDoc(doc(db,"site","config"), config, {merge:true});
     renderServices();
     say("serviceMessage","Services enregistrés.", true);
-  } catch (e) { say("serviceMessage","Échec : " + (e.code || e.message)); }
+    return true;
+  } catch (e) { say("serviceMessage","Échec : " + (e.code || e.message)); return false; }
 }
 window.addService = async function () {
   const v = $("newService").value.trim();
   if (!v) return;
   config.services.push(v); $("newService").value = "";
-  await saveServices();
+  if (await saveServices()) {
+    say("serviceMessage","Offre ajoutée et publiée sur le site. Fixe son prix dans « Mes tarifs », puis prévenis tes membres (onglet Membres).", true);
+    suggestNews("Nouvelle offre : " + v + ". Viens la découvrir sur le site !");
+  }
 };
 </script>
 </body>
