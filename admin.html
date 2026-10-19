@@ -48,6 +48,7 @@ textarea{min-height:75px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .wa{background:#25d366;color:#fff}
 .mail{background:#222;color:#fff}
+.fb{background:#0866ff;color:#fff}
 .member-line{word-break:break-all}
 @media(max-width:520px){main{padding:15px}.stat{grid-template-columns:1fr 1fr}.panel{padding:14px}}
 </style>
@@ -176,7 +177,7 @@ textarea{min-height:75px}
   <section id="members" class="hidden">
     <div class="panel">
       <h2>Prévenir mes membres</h2>
-      <p class="muted">Écris ton annonce : elle s'affiche en haut du site pour les visiteurs. Ensuite, tu peux aussi prévenir chaque membre par WhatsApp ou par mail avec le même message.</p>
+      <p class="muted">Écris ton annonce : elle s'affiche en haut du site pour les visiteurs. Ensuite, tu peux aussi prévenir chaque membre par WhatsApp, Messenger ou Gmail avec le même message.</p>
       <div class="chips">
         <button class="small" onclick="presetNews('tarifs')">Tarifs mis à jour</button>
         <button class="small" onclick="presetNews('visuels')">Nouveaux visuels</button>
@@ -200,7 +201,49 @@ textarea{min-height:75px}
           <button class="small mail" id="mailWebBtn" onclick="notifyMail(true)">Gmail dans le navigateur</button>
         </div>
         <p class="muted">Gmail prépare un seul mail pour plusieurs membres à la fois (adresses en copie cachée).</p>
+        <div class="actions">
+          <button class="fb" id="fbNextBtn" onclick="notifyMessenger()"></button>
+        </div>
+        <p class="muted">Messenger ne permet pas de pré-écrire le message : il est copié automatiquement. La conversation s'ouvre, tu colles le message (appui long, Coller) et tu envoies. Si le membre n'a donné que son nom Facebook, une recherche Facebook s'ouvre à la place.</p>
       </div>
+    </div>
+    <div class="panel">
+      <h2>Inviter des personnes à devenir membres</h2>
+      <p class="muted">Envoie une invitation avec le lien d'inscription de ton site, par WhatsApp, par Messenger ou en la publiant sur Facebook. Sans numéro, WhatsApp te laisse choisir le contact ou le groupe.</p>
+      <label for="inviteText">Message d'invitation</label>
+      <textarea id="inviteText" style="min-height:110px"></textarea>
+      <div class="actions">
+        <button class="wa" onclick="inviteWhatsApp(false)">Inviter via WhatsApp</button>
+        <button class="small" onclick="copyInviteLink()">Copier le lien d'inscription</button>
+      </div>
+      <div class="actions">
+        <button class="fb" onclick="inviteMessenger()">Inviter via Messenger</button>
+        <button class="fb" onclick="shareFacebook()">Publier le lien sur Facebook</button>
+      </div>
+      <label for="inviteNumber">Ou écrire à un numéro précis (avec l'indicatif, sans + ni espaces)</label>
+      <input id="inviteNumber" inputmode="numeric" placeholder="243812345678">
+      <div class="actions">
+        <button class="wa" onclick="inviteWhatsApp(true)">Envoyer l'invitation à ce numéro</button>
+      </div>
+      <p id="inviteMessage" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h2>Mes comptes Facebook</h2>
+      <p class="muted">Enregistre jusqu'à 2 comptes Facebook (profil ou page) pour les ouvrir rapidement. Facebook ne permet pas à un site de lire ta liste d'amis ni d'écrire à ta place : tu choisis toi-même tes amis dans Messenger, ou l'endroit où publier sur Facebook. Pour passer d'un compte à l'autre, ouvre le compte voulu ici, connecte-toi dessus, puis reviens utiliser les boutons « Messenger » et « Publier sur Facebook ».</p>
+      <label for="fbLabel1">Compte 1 : nom</label>
+      <input id="fbLabel1" placeholder="Ex. Mon profil" maxlength="80">
+      <label for="fbUrl1">Compte 1 : lien</label>
+      <input id="fbUrl1" placeholder="facebook.com/ton.profil" maxlength="200">
+      <label for="fbLabel2">Compte 2 : nom</label>
+      <input id="fbLabel2" placeholder="Ex. Ma page MINZOTO Lab" maxlength="80">
+      <label for="fbUrl2">Compte 2 : lien</label>
+      <input id="fbUrl2" placeholder="facebook.com/ta.page" maxlength="200">
+      <div class="actions">
+        <button class="gold" onclick="saveFbAccounts()">Enregistrer</button>
+        <button class="fb" onclick="openFbAccount(1)">Ouvrir le compte 1</button>
+        <button class="fb" onclick="openFbAccount(2)">Ouvrir le compte 2</button>
+      </div>
+      <p id="fbMessage" class="muted"></p>
     </div>
     <div class="panel">
       <div class="row"><h2>Mes membres</h2><button class="small" onclick="copyEmails()">Copier les emails</button></div>
@@ -327,6 +370,7 @@ async function loadAll(){
   renderProjects(); renderServices();
   loadStats();
   loadMembers();
+  loadFbAccounts();
 }
 
 /* ---------- Visiteurs ---------- */
@@ -382,10 +426,11 @@ function newsMessage(){
 function renderMembers(){
   $("memberCount").textContent = members.length;
   $("memberList").innerHTML = members.length ? members.map(m =>
-    `<div class="item"><strong class="member-line">+${escapeText(m.whatsapp)}</strong>
-      <div class="muted">${m.email ? "Gmail : " + escapeText(m.email) : "Pas de Gmail (WhatsApp seulement)"}</div>
+    `<div class="item"><strong class="member-line">${m.name ? escapeText(m.name) : "Nom non renseigné"}</strong>
+      <div class="muted">${m.whatsapp ? "WhatsApp : +" + escapeText(m.whatsapp) : "pas de WhatsApp"} — ${m.facebook ? "Facebook : " + escapeText(m.facebook) : "pas de Facebook"} — ${m.email ? "Gmail : " + escapeText(m.email) : "pas de Gmail"}</div>
       <div class="actions">
-        <button class="small wa" data-wa="${escapeText(m.whatsapp)}">WhatsApp</button>
+        ${m.whatsapp ? `<button class="small wa" data-wa="${escapeText(m.whatsapp)}">WhatsApp</button>` : ""}
+        ${m.facebook ? `<button class="small fb" data-fb="${escapeText(m.facebook)}">Messenger</button>` : ""}
         ${m.email ? `<button class="small mail" data-mail="${escapeText(m.email)}">Mail</button>` : ""}
         <button class="small danger" data-delmem="${escapeText(m.id)}">Supprimer</button>
       </div></div>`
@@ -393,9 +438,12 @@ function renderMembers(){
 }
 $("memberList").addEventListener("click", async e => {
   const g = n => e.target.getAttribute && e.target.getAttribute(n);
-  const wa = g("data-wa"), mail = g("data-mail"), del = g("data-delmem");
+  const wa = g("data-wa"), mail = g("data-mail"), fb = g("data-fb"), del = g("data-delmem");
   if (wa) {
     window.open("https://wa.me/" + wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+  } else if (fb) {
+    openMessenger(fb, newsMessage());
+    say("memberMessage","Message copié : colle-le dans la conversation Messenger, puis envoie.", true);
   } else if (mail) {
     location.href = "mailto:" + mail + "?subject=" + encodeURIComponent("Du nouveau chez MINZOTO Lab") + "&body=" + encodeURIComponent(newsMessage());
   } else if (del) {
@@ -416,6 +464,113 @@ window.copyEmails = async function () {
     say("memberMessage","Emails copiés : colle-les dans le champ « Cci » de ton mail.", true);
   } catch (e) { prompt("Copie cette liste d'emails :", list); }
 };
+/* ---------- Invitation à devenir membre (via WhatsApp) ---------- */
+const INVITE_LINK = SITE_URL + "#membre";
+const INVITE_DEFAULT = "Bonjour ! Rejoins MINZOTO Lab et deviens membre pour être prévenu(e) des nouveaux tarifs, des nouvelles offres et des nouveaux visuels. Inscris-toi ici : " + INVITE_LINK;
+$("inviteText").value = INVITE_DEFAULT;
+window.inviteWhatsApp = function (toNumber) {
+  const text = $("inviteText").value.trim() || INVITE_DEFAULT;
+  let url = "https://wa.me/";
+  if (toNumber) {
+    const n = $("inviteNumber").value.replace(/\D/g, "");
+    if (n.length < 8 || n.length > 15) { say("inviteMessage","Entre un numéro WhatsApp valide, avec l'indicatif."); return; }
+    url += n;
+  }
+  window.open(url + "?text=" + encodeURIComponent(text), "_blank", "noopener");
+  say("inviteMessage","WhatsApp s'ouvre avec ton invitation : appuie sur Envoyer.", true);
+};
+window.copyInviteLink = async function () {
+  try {
+    await navigator.clipboard.writeText(INVITE_LINK);
+    say("inviteMessage","Lien copié : " + INVITE_LINK, true);
+  } catch (e) { prompt("Copie ce lien d'inscription :", INVITE_LINK); }
+};
+/* ---------- Facebook et Messenger ---------- */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+function copyText(t){ try { navigator.clipboard.writeText(t); } catch (e) {} }
+// Lien Messenger à partir de ce que le membre a écrit (lien de profil), sinon recherche Facebook par nom
+function messengerUrl(value){
+  const s = String(value || "").trim();
+  if (/^(https?:\/\/)?([a-z0-9-]+\.)?(facebook\.com|fb\.com|fb\.me|m\.me)\//i.test(s)) {
+    try {
+      const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
+      const h = u.pathname.replace(/\//g, "") === "profile.php"
+        ? (u.searchParams.get("id") || "")
+        : (u.pathname.split("/").filter(Boolean)[0] || "");
+      if (h) return "https://m.me/" + encodeURIComponent(h);
+    } catch (e) {}
+  }
+  return "https://www.facebook.com/search/people/?q=" + encodeURIComponent(s.replace(/^@/, ""));
+}
+function openMessenger(value, text){
+  copyText(text);
+  window.open(messengerUrl(value), "_blank", "noopener");
+}
+window.inviteMessenger = function () {
+  const text = $("inviteText").value.trim() || INVITE_DEFAULT;
+  copyText(text);
+  if (isMobile) location.href = "fb-messenger://share/?link=" + encodeURIComponent(INVITE_LINK);
+  else window.open("https://www.messenger.com/", "_blank", "noopener");
+  say("inviteMessage","Invitation copiée. Dans Messenger, choisis ton ami et colle le message (appui long, Coller). Si Messenger ne s'ouvre pas, ouvre-le toi-même.", true);
+};
+window.shareFacebook = function () {
+  const text = $("inviteText").value.trim() || INVITE_DEFAULT;
+  copyText(text);
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SITE_URL), "_blank", "noopener");
+  say("inviteMessage","Facebook s'ouvre : choisis où publier (ton journal, un groupe ou un ami). Le texte d'invitation est copié : tu peux le coller dans ta publication.", true);
+};
+let notifyFb = [], notifyFbIdx = 0;
+function refreshNotifyFb(){
+  const b = $("fbNextBtn");
+  if (!notifyFb.length) { b.disabled = true; b.textContent = "Messenger : aucun compte Facebook"; }
+  else if (notifyFbIdx >= notifyFb.length) { b.disabled = false; b.textContent = "Messenger : tous contactés (" + notifyFb.length + "). Recommencer"; }
+  else { b.disabled = false; b.textContent = "Messenger : écrire au membre " + (notifyFbIdx + 1) + " sur " + notifyFb.length + " (" + (notifyFb[notifyFbIdx].name || notifyFb[notifyFbIdx].v) + ")"; }
+}
+window.notifyMessenger = function () {
+  if (!notifyFb.length) return;
+  if (notifyFbIdx >= notifyFb.length) { notifyFbIdx = 0; refreshNotifyFb(); return; }
+  openMessenger(notifyFb[notifyFbIdx].v, newsMessage());
+  notifyFbIdx++;
+  refreshNotifyFb();
+  say("newsMessage","Message copié : colle-le dans la conversation Messenger, puis envoie.", true);
+};
+/* Mes comptes Facebook (enregistrés dans un espace privé, visible seulement par l'administrateur) */
+let fbAccounts = [{label:"", url:""}, {label:"", url:""}];
+function renderFbAccounts(){
+  [1, 2].forEach(n => { $("fbLabel" + n).value = fbAccounts[n - 1].label || ""; $("fbUrl" + n).value = fbAccounts[n - 1].url || ""; });
+}
+async function loadFbAccounts(){
+  try {
+    const s = await getDoc(doc(db,"private","facebook"));
+    if (s.exists() && Array.isArray(s.data().accounts)) {
+      fbAccounts = [0, 1].map(i => Object.assign({label:"", url:""}, s.data().accounts[i] || {}));
+    }
+  } catch (e) { /* pas encore enregistrés */ }
+  renderFbAccounts();
+}
+window.saveFbAccounts = async function () {
+  fbAccounts = [1, 2].map(n => ({ label: $("fbLabel" + n).value.trim().slice(0, 80), url: $("fbUrl" + n).value.trim().slice(0, 200) }));
+  try {
+    await setDoc(doc(db,"private","facebook"), { accounts: fbAccounts });
+    say("fbMessage","Comptes Facebook enregistrés.", true);
+  } catch (e) {
+    say("fbMessage","Échec : " + (e.code || e.message) + (e.code === "permission-denied" ? " (publie les nouvelles règles Firestore)" : ""));
+  }
+};
+function facebookUrl(v){
+  const s = String(v || "").trim();
+  if (!s) return null;
+  try {
+    const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
+    if (u.protocol === "https:" && /(^|\.)(facebook\.com|fb\.com|fb\.me|m\.me|messenger\.com)$/i.test(u.hostname)) return u.href;
+  } catch (e) {}
+  return null;
+}
+window.openFbAccount = function (n) {
+  const url = facebookUrl($("fbUrl" + n).value);
+  if (!url) { say("fbMessage","Entre un lien Facebook valide pour le compte " + n + " (ex. facebook.com/ton.profil)."); return; }
+  window.open(url, "_blank", "noopener");
+};
 window.presetNews = function (key) { $("newsTextInput").value = NEWS_PRESETS[key] || ""; };
 /* « Prévenir mes membres » : publie l'annonce sur le site, puis prépare WhatsApp et Gmail */
 let notifyWa = [], notifyWaIdx = 0, notifyMailBatches = [], notifyMailIdx = 0;
@@ -425,7 +580,7 @@ function refreshNotify(){
   const w = $("waNextBtn"), m = $("mailAppBtn"), mw = $("mailWebBtn");
   if (!notifyWa.length) { w.disabled = true; w.textContent = "WhatsApp : aucun membre"; }
   else if (notifyWaIdx >= notifyWa.length) { w.disabled = false; w.textContent = "WhatsApp : tous contactés (" + notifyWa.length + "). Recommencer"; }
-  else { w.disabled = false; w.textContent = "WhatsApp : écrire au membre " + (notifyWaIdx + 1) + " sur " + notifyWa.length + " (+" + notifyWa[notifyWaIdx] + ")"; }
+  else { w.disabled = false; w.textContent = "WhatsApp : écrire au membre " + (notifyWaIdx + 1) + " sur " + notifyWa.length + " (" + (notifyWa[notifyWaIdx].name || "+" + notifyWa[notifyWaIdx].n) + ")"; }
   if (!notifyMailBatches.length) {
     m.disabled = true; mw.disabled = true; m.textContent = "Gmail : aucun email enregistré";
   } else if (notifyMailIdx >= notifyMailBatches.length) {
@@ -443,12 +598,15 @@ window.notifyMembers = async function () {
     publishedNews = text;
   } catch (e) { say("newsMessage","Échec de la publication : " + (e.code || e.message)); return; }
   await loadMembers();
-  notifyWa = members.map(m => String(m.whatsapp || "").replace(/\D/g,"")).filter(n => n.length >= 8);
+  notifyWa = members.map(m => ({ n: String(m.whatsapp || "").replace(/\D/g,""), name: String(m.name || "").trim() })).filter(x => x.n.length >= 8);
   const emails = members.map(m => String(m.email || "").trim()).filter(e => e.indexOf("@") > 0);
   notifyMailBatches = chunk(Array.from(new Set(emails)), MAIL_BATCH);
   notifyWaIdx = 0; notifyMailIdx = 0;
+  notifyFb = members.filter(m => String(m.facebook || "").trim()).map(m => ({ v: String(m.facebook).trim(), name: String(m.name || "").trim() }));
+  notifyFbIdx = 0;
   $("notifyBox").classList.remove("hidden");
   refreshNotify();
+  refreshNotifyFb();
   say("newsMessage", members.length
     ? "Annonce publiée sur le site. Choisis ci-dessous comment prévenir tes membres."
     : "Annonce publiée sur le site. Tu n'as pas encore de membres à prévenir.", true);
@@ -456,7 +614,7 @@ window.notifyMembers = async function () {
 window.notifyWhatsApp = function () {
   if (!notifyWa.length) return;
   if (notifyWaIdx >= notifyWa.length) { notifyWaIdx = 0; refreshNotify(); return; }
-  window.open("https://wa.me/" + notifyWa[notifyWaIdx] + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+  window.open("https://wa.me/" + notifyWa[notifyWaIdx].n + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
   notifyWaIdx++;
   refreshNotify();
 };
