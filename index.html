@@ -158,6 +158,7 @@ footer {
 #memberForm label.check input { margin-top: 3px; flex: none; }
 #mBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
 #mBtn:disabled { opacity: .6; cursor: default; }
+.hint { font-size: 13px; color: #777; margin: 8px 0 0; line-height: 1.5; }
 .mmsg { min-height: 20px; font-size: 14px; margin: 12px 0 0; text-align: center; }
 .mmsg.ok { color: #2c6e2c; }
 .mmsg.err { color: #8d2222; }
@@ -263,10 +264,15 @@ footer {
 
   <section id="membre" class="member">
     <h2>Deviens membre</h2>
-    <p class="intro">Laisse ton numéro WhatsApp pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ton numéro WhatsApp suffit.</p>
+    <p class="intro">Laisse ton numéro WhatsApp ou ton compte Facebook (ou les deux) pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ce n'est pas grave, il est facultatif.</p>
     <form id="memberForm" novalidate>
+      <label for="mName">Nom et prénom</label>
+      <input id="mName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
       <label for="mWa">Numéro WhatsApp (avec l'indicatif, sans + ni espaces)</label>
       <input id="mWa" type="text" inputmode="numeric" autocomplete="tel" placeholder="243812345678">
+      <label for="mFb">Compte Facebook (lien de ton profil ou ton nom Facebook)</label>
+      <input id="mFb" type="text" autocomplete="off" placeholder="facebook.com/ton.profil" maxlength="200">
+      <p class="hint">Remplis au moins WhatsApp ou Facebook. Le Gmail est facultatif.</p>
       <label for="mEmail">Adresse Gmail (facultatif)</label>
       <input id="mEmail" type="email" autocomplete="email" placeholder="ton@gmail.com">
       <label class="check" for="mConsent">
@@ -412,24 +418,47 @@ function memberDone() {
 }
 function memberSay(text, ok) { mMsg.textContent = text; mMsg.className = "mmsg " + (ok ? "ok" : "err"); }
 try { if (localStorage.getItem("mz_member")) memberDone(); } catch (e) {}
+// Identifiant Facebook (pseudo ou numéro) tiré d'un lien ou d'un nom, en minuscules sans caractères spéciaux
+function fbHandle(v) {
+  let s = String(v || "").trim();
+  if (/^(https?:\/\/|www\.|m\.|facebook\.com|fb\.com)/i.test(s)) {
+    try {
+      const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
+      s = u.pathname.replace(/\//g, "") === "profile.php"
+        ? (u.searchParams.get("id") || "")
+        : (u.pathname.split("/").filter(Boolean)[0] || "");
+    } catch (e) { s = ""; }
+  }
+  return s.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._-]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 100);
+}
 memberForm.addEventListener("submit", async ev => {
   ev.preventDefault();
   const email = document.getElementById("mEmail").value.trim().toLowerCase();
   const wa = document.getElementById("mWa").value.replace(/\D/g, "");
-  if (wa.length < 8 || wa.length > 15) { memberSay("Entre ton numéro WhatsApp avec l'indicatif (ex. 243812345678)."); return; }
+  const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > 80) { memberSay("Entre ton nom et ton prénom."); return; }
+  const rawWa = document.getElementById("mWa").value.trim();
+  const fbRaw = document.getElementById("mFb").value.trim();
+  if (rawWa && (wa.length < 8 || wa.length > 15)) { memberSay("Ton numéro WhatsApp doit comporter l'indicatif (ex. 243812345678)."); return; }
+  if (!rawWa && !fbRaw) { memberSay("Entre ton numéro WhatsApp ou ton compte Facebook (au moins un des deux)."); return; }
+  if (fbRaw && fbRaw.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
+  const fbId = fbHandle(fbRaw);
+  if (!wa && fbId.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
   if (email && (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254)) { memberSay("Cette adresse email n'est pas valide. Corrige-la ou laisse la case vide."); return; }
   if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
   const btn = document.getElementById("mBtn");
   btn.disabled = true; memberSay("Inscription en cours…", true);
   try {
-    const data = { whatsapp: wa, createdAt: serverTimestamp() };
+    const data = { name, createdAt: serverTimestamp() };
+    if (wa) data.whatsapp = wa;
+    if (fbRaw) data.facebook = fbRaw.slice(0, 200);
     if (email) data.email = email;
-    await setDoc(doc(db, "members", wa), data);
+    await setDoc(doc(db, "members", wa || ("fb_" + fbId)), data);
     try { localStorage.setItem("mz_member", "1"); } catch (e) {}
     memberDone();
   } catch (e) {
     memberSay(e.code === "permission-denied"
-      ? "Ce numéro est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
+      ? "Ce numéro ou ce compte Facebook est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
       : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
   }
   btn.disabled = false;
