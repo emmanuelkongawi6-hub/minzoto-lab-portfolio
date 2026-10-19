@@ -102,6 +102,9 @@ textarea{min-height:75px}
     <button onclick="showTab('services',this)">Mes services</button>
     <button onclick="showTab('texts',this)">Textes du site</button>
     <button onclick="showTab('members',this)">Membres</button>
+    <button id="quotesTab" onclick="showTab('quotes',this)">Devis</button>
+    <button onclick="showTab('reviews',this)">Témoignages</button>
+    <button onclick="showTab('promos',this)">Promotions</button>
   </nav>
 
   <section id="projects">
@@ -165,8 +168,8 @@ textarea{min-height:75px}
       <input id="heroTitle2">
       <label for="heroText">Texte de présentation</label>
       <textarea id="heroText" style="min-height:120px"></textarea>
-      <label for="whatsapp">Numéro WhatsApp (avec indicatif, sans + ni espaces)</label>
-      <input id="whatsapp" inputmode="numeric" placeholder="243812345678">
+      <label for="whatsapp">Numéro WhatsApp (écris-le comme d'habitude, ex. 081 234 5678)</label>
+      <input id="whatsapp" inputmode="tel" placeholder="081 234 5678">
       <label for="footerTxt">Texte du bas de page</label>
       <input id="footerTxt">
       <button class="gold" onclick="saveTexts()" style="margin-top:16px">Enregistrer les textes</button>
@@ -220,8 +223,8 @@ textarea{min-height:75px}
         <button class="fb" onclick="inviteMessenger()">Inviter via Messenger</button>
         <button class="fb" onclick="shareFacebook()">Publier le lien sur Facebook</button>
       </div>
-      <label for="inviteNumber">Ou écrire à un numéro précis (avec l'indicatif, sans + ni espaces)</label>
-      <input id="inviteNumber" inputmode="numeric" placeholder="243812345678">
+      <label for="inviteNumber">Ou écrire à un numéro précis (comme d'habitude, ex. 081 234 5678)</label>
+      <input id="inviteNumber" inputmode="tel" placeholder="081 234 5678">
       <div class="actions">
         <button class="wa" onclick="inviteWhatsApp(true)">Envoyer l'invitation à ce numéro</button>
       </div>
@@ -249,6 +252,55 @@ textarea{min-height:75px}
       <div class="row"><h2>Mes membres</h2><button class="small" onclick="copyEmails()">Copier les emails</button></div>
       <p id="memberMessage" class="muted"></p>
       <div id="memberList"></div>
+    </div>
+  </section>
+
+  <section id="quotes" class="hidden">
+    <div class="panel">
+      <h2>Demandes de devis</h2>
+      <p class="muted">Les demandes envoyées depuis ton site arrivent ici. Réponds directement sur WhatsApp.</p>
+      <p id="quoteMessage" class="muted"></p>
+      <div id="quoteList"></div>
+    </div>
+  </section>
+
+  <section id="reviews" class="hidden">
+    <div class="panel">
+      <h2>Ajouter un témoignage</h2>
+      <p class="muted">Recopie l'avis d'un client (avec son accord). Il s'affiche sur le site dans « Ils m'ont fait confiance ».</p>
+      <label for="revName">Nom du client</label>
+      <input id="revName" maxlength="80">
+      <label for="revRole">Rôle, entreprise ou ville (facultatif)</label>
+      <input id="revRole" maxlength="80" placeholder="Ex. Responsable chez GB Tech">
+      <label for="revText">Témoignage</label>
+      <textarea id="revText" maxlength="600"></textarea>
+      <button class="gold" onclick="addReview()" style="margin-top:16px">Ajouter le témoignage</button>
+      <p id="reviewMessage" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h2>Mes témoignages</h2>
+      <div id="reviewList"></div>
+    </div>
+  </section>
+
+  <section id="promos" class="hidden">
+    <div class="panel">
+      <h2>Ajouter une promotion</h2>
+      <p class="muted">La promotion s'affiche sur le site et disparaît toute seule après sa date de fin.</p>
+      <label for="promoTitle">Titre</label>
+      <input id="promoTitle" maxlength="80" placeholder="Ex. -20 % sur les logos">
+      <label for="promoDesc">Description (facultatif)</label>
+      <textarea id="promoDesc" maxlength="300"></textarea>
+      <label for="promoPrice">Prix ou réduction (facultatif)</label>
+      <input id="promoPrice" maxlength="60" placeholder="Ex. 30 $ au lieu de 40 $">
+      <label for="promoEnd">Date de fin (facultatif)</label>
+      <input id="promoEnd" type="date">
+      <button class="gold" onclick="addPromo()" style="margin-top:16px">Ajouter la promotion</button>
+      <p id="promoMessage" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h2>Mes promotions</h2>
+      <div id="promoList"></div>
     </div>
   </section>
 </main>
@@ -284,6 +336,19 @@ let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", port
 let photoData = "";
 let members = [];
 const SITE_URL = new URL("./", location.href).href;
+// Numéro WhatsApp écrit comme d'habitude (081 234 5678, +243 81 234 5678, 0033 6…) → chiffres avec indicatif.
+// Sans indicatif, c'est l'indicatif de la RDC (243) qui est ajouté.
+function normPhone(raw){
+  const s = String(raw || "").trim();
+  const d = s.replace(/\D/g, "");
+  if (!d) return "";
+  if (s.charAt(0) === "+") return d;
+  if (d.slice(0, 2) === "00") return d.slice(2);
+  if (d.charAt(0) === "0") return "243" + d.slice(1);
+  if (d.length === 9) return "243" + d;
+  return d;
+}
+function phoneOk(n){ return /^\d{8,15}$/.test(n) && (n.slice(0, 3) !== "243" || n.length === 12); }
 const NEWS_PRESETS = {
   tarifs: "Les tarifs ont été mis à jour. Viens les découvrir sur le site !",
   visuels: "De nouveaux visuels viennent d'être ajoutés. Viens les voir sur le site !",
@@ -371,6 +436,9 @@ async function loadAll(){
   loadStats();
   loadMembers();
   loadFbAccounts();
+  loadQuotes();
+  loadReviews();
+  loadOffers();
 }
 
 /* ---------- Visiteurs ---------- */
@@ -472,8 +540,8 @@ window.inviteWhatsApp = function (toNumber) {
   const text = $("inviteText").value.trim() || INVITE_DEFAULT;
   let url = "https://wa.me/";
   if (toNumber) {
-    const n = $("inviteNumber").value.replace(/\D/g, "");
-    if (n.length < 8 || n.length > 15) { say("inviteMessage","Entre un numéro WhatsApp valide, avec l'indicatif."); return; }
+    const n = normPhone($("inviteNumber").value);
+    if (!phoneOk(n)) { say("inviteMessage","Entre un numéro WhatsApp valide, par exemple 081 234 5678."); return; }
     url += n;
   }
   window.open(url + "?text=" + encodeURIComponent(text), "_blank", "noopener");
@@ -500,7 +568,9 @@ function messengerUrl(value){
       if (h) return "https://m.me/" + encodeURIComponent(h);
     } catch (e) {}
   }
-  return "https://www.facebook.com/search/people/?q=" + encodeURIComponent(s.replace(/^@/, ""));
+  const bare = s.replace(/^@/, "");
+  if (/^[A-Za-z0-9.]{5,50}$/.test(bare) && !/^\d+$/.test(bare)) return "https://m.me/" + bare;
+  return "https://www.facebook.com/search/people/?q=" + encodeURIComponent(bare);
 }
 function openMessenger(value, text){
   copyText(text);
@@ -642,8 +712,157 @@ window.removeNews = async function () {
   } catch (e) { say("newsMessage","Échec : " + (e.code || e.message)); }
 };
 
+/* ---------- Demandes de devis ---------- */
+let quotes = [];
+function fmtDateTime(ts){
+  try { return ts && ts.toDate ? ts.toDate().toLocaleString("fr-FR") : ""; } catch (e) { return ""; }
+}
+async function loadQuotes(){
+  try {
+    const snap = await getDocs(query(collection(db,"quotes"), orderBy("createdAt","desc")));
+    quotes = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    say("quoteMessage", "", true);
+  } catch (e) {
+    quotes = [];
+    say("quoteMessage", e.code === "permission-denied"
+      ? "Accès refusé : publie les nouvelles règles Firestore (fichier firestore.rules)."
+      : "Impossible de charger les devis : " + (e.code || e.message));
+  }
+  renderQuotes();
+}
+function renderQuotes(){
+  const fresh = quotes.filter(q => q.status === "new").length;
+  $("quotesTab").textContent = "Devis" + (fresh ? " (" + fresh + ")" : "");
+  $("quoteList").innerHTML = quotes.length ? quotes.map(q =>
+    `<div class="item"><div class="row"><strong>${escapeText(q.name)}</strong><span class="muted">${q.status === "new" ? "Nouveau" : "Traité"}</span></div>
+      <div class="muted">${escapeText(q.service)}${q.budget ? " · Budget : " + escapeText(q.budget) : ""}${q.delay ? " · Délai : " + escapeText(q.delay) : ""}</div>
+      <div style="margin-top:6px;white-space:pre-wrap">${escapeText(q.message)}</div>
+      <div class="muted">WhatsApp : +${escapeText(q.whatsapp)} — ${escapeText(fmtDateTime(q.createdAt))}</div>
+      <div class="actions">
+        <button class="small wa" data-qwa="${escapeText(q.id)}">Répondre sur WhatsApp</button>
+        <button class="small" data-qdone="${escapeText(q.id)}">${q.status === "new" ? "Marquer comme traité" : "Remettre en nouveau"}</button>
+        <button class="small danger" data-qdel="${escapeText(q.id)}">Supprimer</button>
+      </div></div>`
+  ).join("") : "<p class='muted'>Aucune demande pour le moment.</p>";
+}
+$("quoteList").addEventListener("click", async e => {
+  const g = n => e.target.getAttribute && e.target.getAttribute(n);
+  const wa = g("data-qwa"), done = g("data-qdone"), del = g("data-qdel");
+  const find = id => quotes.find(q => q.id === id);
+  if (wa) {
+    const q = find(wa); if (!q) return;
+    const txt = "Bonjour " + q.name + ", c'est MINZOTO Lab. Merci pour ta demande de devis (" + q.service + "). ";
+    window.open("https://wa.me/" + String(q.whatsapp).replace(/\D/g,"") + "?text=" + encodeURIComponent(txt), "_blank", "noopener");
+  } else if (done) {
+    const q = find(done); if (!q) return;
+    const status = q.status === "new" ? "done" : "new";
+    try { await setDoc(doc(db,"quotes",done), { status }, { merge: true }); q.status = status; renderQuotes(); }
+    catch (err) { say("quoteMessage","Échec : " + (err.code || err.message)); }
+  } else if (del) {
+    if (!confirm("Supprimer cette demande ?")) return;
+    try { await deleteDoc(doc(db,"quotes",del)); quotes = quotes.filter(q => q.id !== del); renderQuotes(); }
+    catch (err) { say("quoteMessage","Suppression impossible : " + (err.code || err.message)); }
+  }
+});
+
+/* ---------- Témoignages ---------- */
+let reviews = [];
+async function loadReviews(){
+  try {
+    const snap = await getDocs(query(collection(db,"testimonials"), orderBy("createdAt","desc")));
+    reviews = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    say("reviewMessage", "", true);
+  } catch (e) {
+    reviews = [];
+    say("reviewMessage", e.code === "permission-denied"
+      ? "Accès refusé : publie les nouvelles règles Firestore (fichier firestore.rules)."
+      : "Impossible de charger les témoignages : " + (e.code || e.message));
+  }
+  renderReviews();
+}
+function renderReviews(){
+  $("reviewList").innerHTML = reviews.length ? reviews.map(r =>
+    `<div class="item"><strong>${escapeText(r.name)}${r.role ? " · " + escapeText(r.role) : ""}</strong>
+      <div class="muted">« ${escapeText(r.text)} »</div>
+      <div class="actions"><button class="small danger" data-delrev="${escapeText(r.id)}">Supprimer</button></div></div>`
+  ).join("") : "<p class='muted'>Aucun témoignage pour le moment.</p>";
+}
+$("reviewList").addEventListener("click", async e => {
+  const id = e.target.getAttribute && e.target.getAttribute("data-delrev");
+  if (!id) return;
+  if (!confirm("Supprimer ce témoignage ?")) return;
+  try { await deleteDoc(doc(db,"testimonials",id)); reviews = reviews.filter(r => r.id !== id); renderReviews(); }
+  catch (err) { say("reviewMessage","Suppression impossible : " + (err.code || err.message)); }
+});
+window.addReview = async function () {
+  const name = $("revName").value.trim(), role = $("revRole").value.trim(), text = $("revText").value.trim();
+  if (name.length < 2) { say("reviewMessage","Entre le nom du client."); return; }
+  if (text.length < 5) { say("reviewMessage","Écris le témoignage."); return; }
+  try {
+    const data = { name, role, text, createdAt: serverTimestamp() };
+    const ref = await addDoc(collection(db,"testimonials"), data);
+    reviews.unshift({ id: ref.id, name, role, text });
+    $("revName").value = ""; $("revRole").value = ""; $("revText").value = "";
+    renderReviews();
+    say("reviewMessage","Témoignage ajouté et publié sur le site.", true);
+  } catch (e) { say("reviewMessage","Échec : " + (e.code || e.message)); }
+};
+
+/* ---------- Promotions avec date de fin ---------- */
+let offers = [];
+function fmtDay(s){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s || "")) return "";
+  const p = s.split("-"); return p[2] + "/" + p[1] + "/" + p[0];
+}
+async function loadOffers(){
+  try {
+    const snap = await getDocs(query(collection(db,"offers"), orderBy("createdAt","desc")));
+    offers = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    say("promoMessage", "", true);
+  } catch (e) {
+    offers = [];
+    say("promoMessage", e.code === "permission-denied"
+      ? "Accès refusé : publie les nouvelles règles Firestore (fichier firestore.rules)."
+      : "Impossible de charger les promotions : " + (e.code || e.message));
+  }
+  renderOffers();
+}
+function renderOffers(){
+  const today = dayKey(0);
+  $("promoList").innerHTML = offers.length ? offers.map(o => {
+    const ended = o.endDate && o.endDate < today;
+    const state = ended ? "Terminée (cachée sur le site)" : (o.endDate ? "En cours, jusqu'au " + fmtDay(o.endDate) : "En cours, sans date de fin");
+    return `<div class="item"><strong>${escapeText(o.title)}</strong>
+      <div class="muted">${escapeText(state)}${o.price ? " · " + escapeText(o.price) : ""}</div>
+      ${o.description ? `<div class="muted">${escapeText(o.description)}</div>` : ""}
+      <div class="actions"><button class="small danger" data-delpromo="${escapeText(o.id)}">Supprimer</button></div></div>`;
+  }).join("") : "<p class='muted'>Aucune promotion pour le moment.</p>";
+}
+$("promoList").addEventListener("click", async e => {
+  const id = e.target.getAttribute && e.target.getAttribute("data-delpromo");
+  if (!id) return;
+  if (!confirm("Supprimer cette promotion ?")) return;
+  try { await deleteDoc(doc(db,"offers",id)); offers = offers.filter(o => o.id !== id); renderOffers(); }
+  catch (err) { say("promoMessage","Suppression impossible : " + (err.code || err.message)); }
+});
+window.addPromo = async function () {
+  const title = $("promoTitle").value.trim(), description = $("promoDesc").value.trim();
+  const price = $("promoPrice").value.trim(), endDate = $("promoEnd").value;
+  if (title.length < 2) { say("promoMessage","Entre le titre de la promotion."); return; }
+  if (endDate && endDate < dayKey(0)) { say("promoMessage","Cette date de fin est déjà passée."); return; }
+  try {
+    const data = { title, description, price, endDate: endDate || "", createdAt: serverTimestamp() };
+    const ref = await addDoc(collection(db,"offers"), data);
+    offers.unshift({ id: ref.id, title, description, price, endDate: endDate || "" });
+    $("promoTitle").value = ""; $("promoDesc").value = ""; $("promoPrice").value = ""; $("promoEnd").value = "";
+    renderOffers();
+    suggestNews("Promotion : " + title + (endDate ? " jusqu'au " + fmtDay(endDate) : "") + ". Viens la découvrir sur le site !");
+    say("promoMessage","Promotion ajoutée et publiée sur le site. Pense à prévenir tes membres (onglet Membres).", true);
+  } catch (e) { say("promoMessage","Échec : " + (e.code || e.message)); }
+};
+
 window.showTab = function (id, button) {
-  ["projects","prices","services","texts","members"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  ["projects","prices","services","texts","members","quotes","reviews","promos"].forEach(x => $(x).classList.toggle("hidden", x !== id));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   button.classList.add("active");
 };
@@ -749,8 +968,9 @@ window.savePrices = async function () {
 
 /* ---------- Textes du site ---------- */
 window.saveTexts = async function () {
-  const wa = $("whatsapp").value.replace(/\D/g, "");
-  if (wa.length < 8) { say("textMessage","Numéro WhatsApp invalide."); return; }
+  const wa = normPhone($("whatsapp").value);
+  if (!phoneOk(wa)) { say("textMessage","Numéro WhatsApp invalide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
+  $("whatsapp").value = wa;
   config.texts = { heroTitle1: $("heroTitle1").value.trim(), heroTitle2: $("heroTitle2").value.trim(),
     heroText: $("heroText").value.trim(), whatsapp: wa, footer: $("footerTxt").value.trim() };
   try {
