@@ -232,15 +232,27 @@ textarea{min-height:75px}
     </div>
     <div class="panel">
       <h2>Mes comptes Facebook</h2>
-      <p class="muted">Enregistre jusqu'à 2 comptes Facebook (profil ou page) pour les ouvrir rapidement. Facebook ne permet pas à un site de lire ta liste d'amis ni d'écrire à ta place : tu choisis toi-même tes amis dans Messenger, ou l'endroit où publier sur Facebook. Pour passer d'un compte à l'autre, ouvre le compte voulu ici, connecte-toi dessus, puis reviens utiliser les boutons « Messenger » et « Publier sur Facebook ».</p>
+      <p class="muted">Enregistre jusqu'à 2 comptes Facebook (profil ou page) et choisis pour chacun l'application qui s'ouvre : Facebook Lite ou Facebook normal (sur Android). Tu peux ainsi gérer le compte directement dans la bonne application. Facebook ne permet pas à un site de lire ta liste d'amis ni d'écrire à ta place : tu choisis toi-même tes amis dans Messenger, ou l'endroit où publier sur Facebook. Pour passer d'un compte à l'autre, ouvre le compte voulu ici, connecte-toi dessus, puis reviens utiliser les boutons « Messenger » et « Publier sur Facebook ».</p>
       <label for="fbLabel1">Compte 1 : nom</label>
       <input id="fbLabel1" placeholder="Ex. Mon profil" maxlength="80">
       <label for="fbUrl1">Compte 1 : lien</label>
       <input id="fbUrl1" placeholder="facebook.com/ton.profil" maxlength="200">
+      <label for="fbApp1">Compte 1 : application à utiliser</label>
+      <select id="fbApp1">
+        <option value="lite">Facebook Lite</option>
+        <option value="fb">Facebook (icône bleue)</option>
+        <option value="web">Navigateur (Chrome…)</option>
+      </select>
       <label for="fbLabel2">Compte 2 : nom</label>
       <input id="fbLabel2" placeholder="Ex. Ma page MINZOTO Lab" maxlength="80">
       <label for="fbUrl2">Compte 2 : lien</label>
       <input id="fbUrl2" placeholder="facebook.com/ta.page" maxlength="200">
+      <label for="fbApp2">Compte 2 : application à utiliser</label>
+      <select id="fbApp2">
+        <option value="lite">Facebook Lite</option>
+        <option value="fb">Facebook (icône bleue)</option>
+        <option value="web">Navigateur (Chrome…)</option>
+      </select>
       <div class="actions">
         <button class="gold" onclick="saveFbAccounts()">Enregistrer</button>
         <button class="fb" onclick="openFbAccount(1)">Ouvrir le compte 1</button>
@@ -605,21 +617,27 @@ window.notifyMessenger = function () {
   say("newsMessage","Message copié : colle-le dans la conversation Messenger, puis envoie.", true);
 };
 /* Mes comptes Facebook (enregistrés dans un espace privé, visible seulement par l'administrateur) */
-let fbAccounts = [{label:"", url:""}, {label:"", url:""}];
+let fbAccounts = [{label:"", url:"", app:"lite"}, {label:"", url:"", app:"lite"}];
+const FB_APPS = { lite: "com.facebook.lite", fb: "com.facebook.katana" };
+function fbAppOf(v){ return (v === "fb" || v === "web") ? v : "lite"; }
 function renderFbAccounts(){
-  [1, 2].forEach(n => { $("fbLabel" + n).value = fbAccounts[n - 1].label || ""; $("fbUrl" + n).value = fbAccounts[n - 1].url || ""; });
+  [1, 2].forEach(n => {
+    $("fbLabel" + n).value = fbAccounts[n - 1].label || "";
+    $("fbUrl" + n).value = fbAccounts[n - 1].url || "";
+    $("fbApp" + n).value = fbAppOf(fbAccounts[n - 1].app);
+  });
 }
 async function loadFbAccounts(){
   try {
     const s = await getDoc(doc(db,"private","facebook"));
     if (s.exists() && Array.isArray(s.data().accounts)) {
-      fbAccounts = [0, 1].map(i => Object.assign({label:"", url:""}, s.data().accounts[i] || {}));
+      fbAccounts = [0, 1].map(i => Object.assign({label:"", url:"", app:"lite"}, s.data().accounts[i] || {}));
     }
   } catch (e) { /* pas encore enregistrés */ }
   renderFbAccounts();
 }
 window.saveFbAccounts = async function () {
-  fbAccounts = [1, 2].map(n => ({ label: $("fbLabel" + n).value.trim().slice(0, 80), url: $("fbUrl" + n).value.trim().slice(0, 200) }));
+  fbAccounts = [1, 2].map(n => ({ label: $("fbLabel" + n).value.trim().slice(0, 80), url: $("fbUrl" + n).value.trim().slice(0, 200), app: fbAppOf($("fbApp" + n).value) }));
   try {
     await setDoc(doc(db,"private","facebook"), { accounts: fbAccounts });
     say("fbMessage","Comptes Facebook enregistrés.", true);
@@ -639,7 +657,18 @@ function facebookUrl(v){
 window.openFbAccount = function (n) {
   const url = facebookUrl($("fbUrl" + n).value);
   if (!url) { say("fbMessage","Entre un lien Facebook valide pour le compte " + n + " (ex. facebook.com/ton.profil)."); return; }
+  const app = fbAppOf($("fbApp" + n).value);
+  const pkg = FB_APPS[app];
+  if (pkg && /Android/i.test(navigator.userAgent)) {
+    // Android : ouvre directement dans l'application choisie ; si elle n'est pas installée, le lien s'ouvre dans le navigateur
+    const u = new URL(url);
+    location.href = "intent://" + u.host + u.pathname + u.search + u.hash +
+      "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
+    say("fbMessage", "Ouverture dans " + (app === "lite" ? "Facebook Lite" : "Facebook") + "… Si rien ne s'ouvre, vérifie que l'application est installée.", true);
+    return;
+  }
   window.open(url, "_blank", "noopener");
+  if (pkg) say("fbMessage", "Ouverture dans le navigateur : le choix de l'application ne fonctionne que sur un téléphone Android.");
 };
 window.presetNews = function (key) { $("newsTextInput").value = NEWS_PRESETS[key] || ""; };
 /* « Prévenir mes membres » : publie l'annonce sur le site, puis prépare WhatsApp et Gmail */
@@ -980,8 +1009,20 @@ window.saveTexts = async function () {
 };
 
 /* ---------- Services ---------- */
+/* Catégories proposées pour un visuel : les catégories de base + tous les services ajoutés */
+const BASE_CATEGORIES = ["Logo","Affiche","Portrait numérique","Retouche photo"];
+function refreshCategoryOptions(){
+  const sel = $("projectCategory");
+  if (!sel) return;
+  const current = sel.value;
+  const extra = extraServices().filter(n => !BASE_CATEGORIES.includes(n) && n !== "Autre création");
+  const list = BASE_CATEGORIES.concat(extra, ["Autre création"]);
+  sel.innerHTML = list.map(c => `<option>${escapeText(c)}</option>`).join("");
+  if (list.includes(current)) sel.value = current;
+}
 function renderServices(){
   $("serviceCount").textContent = config.services.length;
+  refreshCategoryOptions();
   $("serviceList").innerHTML = config.services.map((s,i) =>
     `<div class="item row"><strong>${escapeText(s)}</strong><button class="small danger" data-delsvc="${i}">Supprimer</button></div>`
   ).join("");
