@@ -223,9 +223,77 @@ footer {
   .hero { padding: 55px 6%; }
   section { padding: 42px 6%; }
 }
+/* ---------- Intro : une étoile sur fond noir ---------- */
+html.introOn { overflow: hidden; }
+#intro {
+  position: fixed; inset: 0; z-index: 9999; background: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
+  transition: background 1.5s ease, opacity .7s ease;
+}
+#intro.white { background: #fff; }
+#intro.out { opacity: 0; pointer-events: none; }
+#introSvg {
+  width: min(92vw, 540px); height: auto; overflow: visible; display: block;
+  animation: introBlink 1.3s ease-in-out infinite;
+}
+#introStar { cursor: pointer; outline: none; }
+#introSvg g.o { transform-box: fill-box; transform-origin: center; }
+/* La grande étoile est d'abord au centre de l'écran, puis revient à sa place dans le logo */
+#introSvg .o1 { transform: translate(93px, 17.5px); }
+#introSvg .o2, #introSvg .o3 { opacity: 0; }
+@keyframes introBlink {
+  0%, 100% { opacity: .3; filter: drop-shadow(0 0 3px rgba(255,221,18,.35)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 22px #ffdd12) drop-shadow(0 0 60px #ffdd12) drop-shadow(0 0 110px rgba(255,221,18,.8)); }
+}
+#intro.go #introSvg { animation: introGlow 3.4s ease-in forwards; }
+@keyframes introGlow {
+  0% { opacity: 1; filter: drop-shadow(0 0 14px #ffdd12) drop-shadow(0 0 40px #ffdd12); }
+  45% { opacity: 1; filter: drop-shadow(0 0 40px #fff2a0) drop-shadow(0 0 100px #ffdd12) drop-shadow(0 0 180px #ffdd12) brightness(1.4); }
+  80% { opacity: 1; filter: drop-shadow(0 0 70px #fff) drop-shadow(0 0 160px #fff2a0) drop-shadow(0 0 260px #ffdd12) brightness(2); }
+  100% { opacity: 0; filter: drop-shadow(0 0 90px #fff) brightness(3); }
+}
+#intro.go .o1 { transform: none; transition: transform 1s cubic-bezier(.65,0,.3,1); }
+#intro.go .o2 { animation: introIn 1.1s cubic-bezier(.2,.8,.3,1) 1s both, introSway 1.7s ease-in-out 2.1s infinite alternate; }
+#intro.go .o3 { animation: introIn 1.1s cubic-bezier(.2,.8,.3,1) 1.35s both, introSway 1.9s ease-in-out 2.45s infinite alternate-reverse; }
+@keyframes introIn {
+  0% { opacity: 0; transform: scale(.05) rotate(-160deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes introSway {
+  from { transform: rotate(-8deg) scale(1); }
+  to { transform: rotate(8deg) scale(1.06); }
+}
+#introBtn {
+  font: inherit; font-size: 17px; font-weight: 700; letter-spacing: .02em;
+  padding: 15px 28px; min-height: 48px; cursor: pointer;
+  background: transparent; color: #ffdd12; border: 2px solid #ffdd12; border-radius: 6px;
+  transition: opacity .5s ease, transform .5s ease, background .2s ease, color .2s ease;
+}
+#introBtn:hover, #introBtn:focus-visible { background: #ffdd12; color: #000; outline: none; }
+#intro.go #introBtn { opacity: 0; transform: translateY(10px); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  #introSvg, #intro.go .o2, #intro.go .o3 { animation-duration: .01s !important; }
+  #intro.go .o1 { transition-duration: .01s; }
+}
 </style>
+<noscript><style>#intro { display: none !important; }</style></noscript>
 </head>
 <body>
+<div id="intro" role="dialog" aria-label="Introduction MINZOTO Lab">
+  <svg id="introSvg" viewBox="240 20 610 485" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs><path id="introPath" d="M0,-1 Q0.27,-0.27 1,0 Q0.27,0.27 0,1 Q-0.27,0.27 -1,0 Q-0.27,-0.27 0,-1Z"/></defs>
+    <g fill="#ffdd12">
+      <g class="o o1" id="introStar" role="button" tabindex="0" aria-label="Clique sur l'étoile pour entrer">
+        <use href="#introPath" transform="translate(452 245) scale(197 215)"/>
+      </g>
+      <g class="o o2"><use href="#introPath" transform="translate(672 128) scale(95 100)"/></g>
+      <g class="o o3"><use href="#introPath" transform="translate(698 355) scale(135 137)"/></g>
+    </g>
+  </svg>
+  <button id="introBtn" type="button">Clique sur l'étoile</button>
+</div>
+<script>document.documentElement.classList.add("introOn");</script>
 <div id="newsBar" class="news hidden" role="status">
   <span><b>Nouveau :</b><span id="newsText"></span></span>
   <button id="newsClose" type="button" aria-label="Fermer l'annonce">×</button>
@@ -722,6 +790,31 @@ memberForm.addEventListener("submit", async ev => {
   }
   btn.disabled = false;
 });
+</script>
+<script>
+/* Intro étoile : noir, clic, les deux autres étoiles apparaissent et s'illuminent jusqu'au blanc */
+(function () {
+  var intro = document.getElementById("intro");
+  if (!intro) return;
+  var started = false;
+  function finish() {
+    document.documentElement.classList.remove("introOn");
+    if (intro.parentNode) intro.parentNode.removeChild(intro);
+  }
+  function start() {
+    if (started) return;
+    started = true;
+    intro.classList.add("go");
+    setTimeout(function () { intro.classList.add("white"); }, 1900);
+    setTimeout(function () { intro.classList.add("out"); }, 3500);
+    setTimeout(finish, 4300);
+  }
+  document.getElementById("introStar").addEventListener("click", start);
+  document.getElementById("introStar").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); }
+  });
+  document.getElementById("introBtn").addEventListener("click", start);
+})();
 </script>
 </body>
                                 </html>
