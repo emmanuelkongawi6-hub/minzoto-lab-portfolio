@@ -32,7 +32,7 @@ textarea{min-height:75px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .small{padding:8px 10px;font-size:12px}
 .danger{background:#f8e5e5;color:#8d2222}
-.hidden{display:none}
+.hidden{display:none!important}
 .notice{background:#fff6d8;padding:13px;border-radius:8px;font-size:13px;line-height:1.5}
 .error{color:#8d2222;font-size:14px;margin:12px 0 0;min-height:18px}
 .ok{color:#2c6e2c;font-size:14px;margin:12px 0 0;min-height:18px}
@@ -50,6 +50,14 @@ textarea{min-height:75px}
 .mail{background:#222;color:#fff}
 .fb{background:#0866ff;color:#fff}
 .member-line{word-break:break-all}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+.modal .box{background:#fff;border-radius:14px;padding:18px;max-width:430px;width:100%;max-height:92vh;overflow:auto}
+.modal .box h3{margin:0 0 4px}
+.choice{display:block;width:100%;margin-top:10px;text-align:left;background:#f4f4f1;color:#202020;border:1px solid #ddd;padding:13px 14px}
+.choice small{display:block;font-weight:normal;color:#666;margin-top:3px}
+.hint-box{background:#fff6d8;border-radius:8px;padding:11px;font-size:13px;line-height:1.5;margin-top:12px}
+details.notice summary{cursor:pointer}
+.field-hd{margin:22px 0 0;font-size:13px;color:#9c7810;text-transform:uppercase;letter-spacing:.06em}
 @media(max-width:520px){main{padding:15px}.stat{grid-template-columns:1fr 1fr}.panel{padding:14px}}
 </style>
 </head>
@@ -113,6 +121,8 @@ textarea{min-height:75px}
       <label for="projectPhoto">Photo (logo, affiche, visuel)</label>
       <input id="projectPhoto" type="file" accept="image/*">
       <img id="photoPreview" class="preview hidden" alt="Aperçu">
+      <p id="aiMessage" class="muted"></p>
+      <button type="button" class="small hidden" id="aiAgainBtn" onclick="analyzeCurrentPhoto(true)">Analyser à nouveau</button>
       <label for="projectName">Nom du projet</label>
       <input id="projectName" placeholder="Ex. Logo pour une entreprise">
       <label for="projectCategory">Catégorie</label>
@@ -123,6 +133,14 @@ textarea{min-height:75px}
       </select>
       <label for="projectDescription">Description</label>
       <textarea id="projectDescription" placeholder="Décris brièvement le projet"></textarea>
+      <details class="notice" style="margin-top:14px">
+        <summary><b>Analyse plus intelligente (gratuite, à faire une seule fois)</b></summary>
+        <p>Sans clé, le site lit le texte de l'image et ses couleurs pour proposer un titre, un type et une description. Avec une clé gratuite Google, l'analyse comprend vraiment l'image.</p>
+        <p>1. Ouvre <b>aistudio.google.com/apikey</b> avec ton compte Google.<br>2. Appuie sur « Créer une clé API ».<br>3. Copie la clé et colle-la ici.</p>
+        <input id="aiKey" placeholder="Clé Google (commence par AIza…)" autocomplete="off">
+        <div class="actions"><button type="button" class="small gold" onclick="saveAiKey()">Enregistrer la clé</button><button type="button" class="small danger" onclick="removeAiKey()">Retirer la clé</button></div>
+        <p id="aiKeyMsg" class="muted"></p>
+      </details>
       <button class="gold" id="addProjectBtn" onclick="addProject()" style="margin-top:16px">Ajouter le projet</button>
       <p id="projectMessage" class="muted"></p>
     </div>
@@ -179,6 +197,18 @@ textarea{min-height:75px}
       <input id="footerTxt">
       <button class="gold" onclick="saveTexts()" style="margin-top:16px">Enregistrer les textes</button>
       <p id="textMessage" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h2>Tous les autres textes et ma photo</h2>
+      <p class="muted">Modifie ici n'importe quel texte du site, sans toucher au code. Les changements sont publiés tout de suite. Pour revenir au texte d'origine, efface le champ.</p>
+      <label for="creatorPhotoInput">Ma photo de présentation (créateur du site)</label>
+      <img id="creatorPreview" class="preview hidden" alt="Photo actuelle" style="max-height:150px">
+      <input id="creatorPhotoInput" type="file" accept="image/*">
+      <div class="actions"><button type="button" class="small danger" onclick="resetCreatorPhoto()">Remettre la photo d'origine</button></div>
+      <p id="creatorPhotoMsg" class="muted"></p>
+      <div id="allTextFields"></div>
+      <button class="gold" onclick="saveAllTexts()" style="margin-top:16px">Enregistrer tous les textes et la photo</button>
+      <p id="allTextMessage" class="muted"></p>
     </div>
   </section>
 
@@ -322,6 +352,16 @@ textarea{min-height:75px}
   </section>
 </main>
 
+<div id="shareModal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="box">
+    <h3 id="shareTitle"></h3>
+    <p id="shareSub" class="muted"></p>
+    <div id="shareOptions"></div>
+    <div id="shareHint" class="hint-box hidden"></div>
+    <button type="button" class="small" style="margin-top:14px;background:#eee;color:#333" onclick="closeShare()">Fermer</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -349,7 +389,8 @@ let projects = [];
 let config = { prices: {logo:"Prix sur demande", poster:"Prix sur demande", portrait:"Prix sur demande"}, services: DEFAULT_SERVICES.slice(), extras: [],
   texts: { heroTitle1:"Les idées deviennent", heroTitle2:"des créations.",
     heroText:"Bienvenue chez MINZOTO Lab, votre studio créatif. Identité visuelle, affiches, portraits numériques et retouche photo pour donner vie à vos idées.",
-    whatsapp:"243835263914", footer:"© 2026 MINZOTO Lab — Studio créatif" } };
+    whatsapp:"243835263914", footer:"© 2026 MINZOTO Lab — Studio créatif" },
+  siteTexts: {} };
 let photoData = "";
 let members = [];
 const SITE_URL = new URL("./", location.href).href;
@@ -441,6 +482,7 @@ async function loadAll(){
       if (Array.isArray(d.services)) config.services = d.services;
       if (Array.isArray(d.extras)) config.extras = d.extras;
       config.texts = Object.assign(config.texts, d.texts || {});
+      config.siteTexts = (d.siteTexts && typeof d.siteTexts === "object") ? d.siteTexts : {};
     }
   } catch (e) { /* config pas encore créée */ }
   $("logoPrice").value = config.prices.logo;
@@ -450,6 +492,7 @@ async function loadAll(){
   $("heroTitle1").value = T.heroTitle1; $("heroTitle2").value = T.heroTitle2;
   $("heroText").value = T.heroText; $("whatsapp").value = T.whatsapp; $("footerTxt").value = T.footer;
   renderProjects(); renderServices();
+  renderAllTexts(); loadAiKey();
   loadStats();
   loadMembers();
   loadFbAccounts();
@@ -515,7 +558,7 @@ function renderMembers(){
       <div class="muted">${m.whatsapp ? "WhatsApp : +" + escapeText(m.whatsapp) : "pas de WhatsApp"} — ${m.facebook ? "Facebook : " + escapeText(m.facebook) : "pas de Facebook"} — ${m.email ? "Gmail : " + escapeText(m.email) : "pas de Gmail"}</div>
       <div class="actions">
         ${m.whatsapp ? `<button class="small wa" data-wa="${escapeText(m.whatsapp)}">WhatsApp</button>` : ""}
-        ${m.facebook ? `<button class="small fb" data-fb="${escapeText(m.facebook)}">Messenger</button>` : ""}
+        ${m.facebook ? `<button class="small fb" data-fbp="${escapeText(m.facebook)}">Profil Facebook</button><button class="small fb" data-fb="${escapeText(m.facebook)}">Messenger</button>` : ""}
         ${m.email ? `<button class="small mail" data-mail="${escapeText(m.email)}">Mail</button>` : ""}
         <button class="small danger" data-delmem="${escapeText(m.id)}">Supprimer</button>
       </div></div>`
@@ -523,9 +566,11 @@ function renderMembers(){
 }
 $("memberList").addEventListener("click", async e => {
   const g = n => e.target.getAttribute && e.target.getAttribute(n);
-  const wa = g("data-wa"), mail = g("data-mail"), fb = g("data-fb"), del = g("data-delmem");
+  const wa = g("data-wa"), mail = g("data-mail"), fb = g("data-fb"), fbp = g("data-fbp"), del = g("data-delmem");
   if (wa) {
     waOpen(wa, newsMessage());
+  } else if (fbp) {
+    openMemberProfile(fbp);
   } else if (fb) {
     openMessenger(fb, newsMessage());
     say("memberMessage","Message copié : colle-le dans la conversation Messenger, puis envoie.", true);
@@ -591,22 +636,56 @@ window.copyInviteLink = async function () {
 /* ---------- Facebook et Messenger ---------- */
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 function copyText(t){ try { navigator.clipboard.writeText(t); } catch (e) {} }
-// Lien Messenger à partir de ce que le membre a écrit (lien de profil), sinon recherche Facebook par nom
-function messengerUrl(value){
+// Analyse de ce que le membre a écrit : lien de profil, pseudo, numéro Facebook ou simple nom
+const FB_RESERVED = ["share","people","groups","pages","watch","marketplace","events","photo","photo.php","permalink.php","story.php","posts","reel","reels","stories","login","l.php","sharer","sharer.php","profile.php","hashtag","gaming","video","videos","public","pg","p","r.php","home.php","search"];
+function parseFb(value){
   const s = String(value || "").trim();
-  if (/^(https?:\/\/)?([a-z0-9-]+\.)?(facebook\.com|fb\.com|fb\.me|m\.me)\//i.test(s)) {
+  const name = s.replace(/^@/, "");
+  const looksLink = /^(https?:\/\/)?((www|m|web|mbasic|l|lm)\.)?(facebook\.com|fb\.com|fb\.me|m\.me|messenger\.com)(\/|$|\?)/i.test(s);
+  if (looksLink) {
     try {
       const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
-      const h = u.pathname.replace(/\//g, "") === "profile.php"
-        ? (u.searchParams.get("id") || "")
-        : (u.pathname.split("/").filter(Boolean)[0] || "");
-      if (h) return "https://m.me/" + encodeURIComponent(h);
+      const host = u.hostname.toLowerCase().replace(/^(www|m|web|mbasic)\./, "");
+      let parts = u.pathname.split("/").filter(Boolean);
+      if (host === "messenger.com" && parts[0] === "t" && parts[1]) parts = [parts[1]];
+      if (host === "m.me" || host === "fb.me") {
+        if (parts[0]) return /^\d{6,}$/.test(parts[0])
+          ? { kind: "id", handle: parts[0], url: "https://www.facebook.com/profile.php?id=" + parts[0] }
+          : { kind: "handle", handle: parts[0], url: "https://www.facebook.com/" + parts[0] };
+      } else if (parts[0] === "profile.php") {
+        const id = u.searchParams.get("id");
+        if (id) return { kind: "id", handle: id, url: "https://www.facebook.com/profile.php?id=" + id };
+      } else if (parts[0] === "people" && /^\d{6,}$/.test(parts[2] || "")) {
+        return { kind: "id", handle: parts[2], url: "https://www.facebook.com/profile.php?id=" + parts[2] };
+      } else if (parts[0] === "pages" && /^\d{6,}$/.test(parts[parts.length - 1] || "")) {
+        const id = parts[parts.length - 1];
+        return { kind: "id", handle: id, url: "https://www.facebook.com/" + id };
+      } else if (parts[0] && FB_RESERVED.indexOf(parts[0].toLowerCase()) < 0) {
+        return /^\d{6,}$/.test(parts[0])
+          ? { kind: "id", handle: parts[0], url: "https://www.facebook.com/profile.php?id=" + parts[0] }
+          : { kind: "handle", handle: parts[0], url: "https://www.facebook.com/" + parts[0] };
+      }
+      // lien de partage (facebook.com/share/…) ou autre : on garde le lien tel quel, Facebook l'ouvre sur le bon profil
+      if (parts.length) return { kind: "link", handle: "", url: "https://www.facebook.com/" + parts.join("/") + (parts[0] === "share" ? "" : u.search) };
     } catch (e) {}
   }
-  const bare = s.replace(/^@/, "");
-  if (/^[A-Za-z0-9.]{5,50}$/.test(bare) && !/^\d+$/.test(bare)) return "https://m.me/" + bare;
-  return "https://www.facebook.com/search/people/?q=" + encodeURIComponent(bare);
+  if (/^\d{8,}$/.test(name)) return { kind: "id", handle: name, url: "https://www.facebook.com/profile.php?id=" + name };
+  if (/^[A-Za-z0-9.]{5,50}$/.test(name)) return { kind: "handle", handle: name, url: "https://www.facebook.com/" + name };
+  return { kind: "name", handle: "", url: "https://www.facebook.com/search/people/?q=" + encodeURIComponent(name) };
 }
+function messengerUrl(value){
+  const f = parseFb(value);
+  if (f.kind === "handle" || f.kind === "id") return "https://m.me/" + encodeURIComponent(f.handle);
+  return f.url; // lien de partage ou nom : le profil s'ouvre, appuie sur « Message » ou « Messenger »
+}
+function profileUrl(value){ return parseFb(value).url; }
+window.openMemberProfile = function (value) {
+  const f = parseFb(value);
+  openInFbApp(f.url, $("fbApp1") ? $("fbApp1").value : "web");
+  say("memberMessage", f.kind === "name"
+    ? "Ce membre n'a écrit que son nom : Facebook propose une recherche, choisis le bon profil."
+    : "Profil ouvert.", f.kind !== "name");
+};
 function openMessenger(value, text){
   copyText(text);
   window.open(messengerUrl(value), "_blank", "noopener");
@@ -677,21 +756,25 @@ function facebookUrl(v){
   } catch (e) {}
   return null;
 }
+// Android : ouvre le lien directement dans l'application choisie (Facebook Lite ou Facebook) ; sinon dans le navigateur
+function openInFbApp(url, app){
+  const pkg = FB_APPS[fbAppOf(app)];
+  if (pkg && /Android/i.test(navigator.userAgent)) {
+    const u = new URL(url);
+    location.href = "intent://" + u.host + u.pathname + u.search + u.hash +
+      "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
+    return true;
+  }
+  window.open(url, "_blank", "noopener");
+  return false;
+}
 window.openFbAccount = function (n) {
   const url = facebookUrl($("fbUrl" + n).value);
   if (!url) { say("fbMessage","Entre un lien Facebook valide pour le compte " + n + " (ex. facebook.com/ton.profil)."); return; }
   const app = fbAppOf($("fbApp" + n).value);
-  const pkg = FB_APPS[app];
-  if (pkg && /Android/i.test(navigator.userAgent)) {
-    // Android : ouvre directement dans l'application choisie ; si elle n'est pas installée, le lien s'ouvre dans le navigateur
-    const u = new URL(url);
-    location.href = "intent://" + u.host + u.pathname + u.search + u.hash +
-      "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
-    say("fbMessage", "Ouverture dans " + (app === "lite" ? "Facebook Lite" : "Facebook") + "… Si rien ne s'ouvre, vérifie que l'application est installée.", true);
-    return;
-  }
-  window.open(url, "_blank", "noopener");
-  if (pkg) say("fbMessage", "Ouverture dans le navigateur : le choix de l'application ne fonctionne que sur un téléphone Android.");
+  const inApp = openInFbApp(url, app);
+  if (inApp) say("fbMessage", "Ouverture dans " + (app === "lite" ? "Facebook Lite" : "Facebook") + "… Si rien ne s'ouvre, vérifie que l'application est installée.", true);
+  else if (FB_APPS[app]) say("fbMessage", "Ouverture dans le navigateur : le choix de l'application ne fonctionne que sur un téléphone Android.");
 };
 window.presetNews = function (key) { $("newsTextInput").value = NEWS_PRESETS[key] || ""; };
 /* « Prévenir mes membres » : publie l'annonce sur le site, puis prépare WhatsApp et Gmail */
@@ -956,8 +1039,149 @@ $("projectPhoto").addEventListener("change", async e => {
     $("photoPreview").src = photoData;
     $("photoPreview").classList.remove("hidden");
     say("projectMessage","", true);
+    analyzeCurrentPhoto(false);
   } catch (err) { say("projectMessage","Photo non utilisable : " + err.message); }
 });
+
+
+/* ---------- Analyse automatique de l'image : titre, type, description ---------- */
+const autoFilled = { projectName: false, projectCategory: false, projectDescription: false };
+["projectName","projectCategory","projectDescription"].forEach(id => {
+  const el = $(id);
+  el.addEventListener("input", () => { autoFilled[id] = false; });
+  el.addEventListener("change", () => { autoFilled[id] = false; });
+});
+function setAuto(id, value){
+  const el = $(id);
+  if (!value) return;
+  if (el.value.trim() && !autoFilled[id]) return; // ne jamais écraser ce que tu as écrit
+  el.value = value; autoFilled[id] = true;
+}
+function categoryList(){ return Array.from($("projectCategory").options).map(o => o.value); }
+let aiKeyCache = "";
+async function loadAiKey(){
+  try { aiKeyCache = localStorage.getItem("aiKey") || ""; } catch (e) {}
+  if (!aiKeyCache) {
+    try { const d = await getDoc(doc(db,"private","ai")); if (d.exists()) aiKeyCache = String(d.data().key || ""); } catch (e) {}
+  }
+  $("aiKey").value = aiKeyCache ? "••••••••••••" : "";
+}
+window.saveAiKey = async function () {
+  const v = $("aiKey").value.trim();
+  if (!v || v.indexOf("•") >= 0) { say("aiKeyMsg","Colle ta clé dans la case.", false); return; }
+  if (!/^[A-Za-z0-9_\-]{20,}$/.test(v)) { say("aiKeyMsg","Cette clé ne semble pas valide. Elle commence par AIza.", false); return; }
+  aiKeyCache = v;
+  try { localStorage.setItem("aiKey", v); } catch (e) {}
+  try { await setDoc(doc(db,"private","ai"), { key: v }); } catch (e) {}
+  $("aiKey").value = "••••••••••••";
+  say("aiKeyMsg","Clé enregistrée. Les prochaines photos seront analysées par l'IA.", true);
+};
+window.removeAiKey = async function () {
+  aiKeyCache = "";
+  try { localStorage.removeItem("aiKey"); } catch (e) {}
+  try { await setDoc(doc(db,"private","ai"), { key: "" }); } catch (e) {}
+  $("aiKey").value = "";
+  say("aiKeyMsg","Clé retirée. L'analyse simple (texte et couleurs) reste active.", true);
+};
+async function geminiAnalyze(dataUrl, cats, key){
+  const prompt = "Tu es l'assistant d'un studio de design graphique en RDC. Analyse ce visuel (logo, affiche, flyer, visuel pour réseaux sociaux, marque de vêtements, portrait, retouche…). " +
+    "Réponds uniquement en JSON : {\"title\":\"...\",\"category\":\"...\",\"description\":\"...\"}. " +
+    "title : 2 à 6 mots en français ; si un titre ou un nom est lisible sur le visuel, reprends-le exactement. " +
+    "category : exactement une de ces valeurs : " + cats.join(" | ") + ". " +
+    "description : 1 ou 2 phrases courtes en français (style, couleurs, message). N'invente aucun nom, numéro ou contact qui n'est pas lisible sur l'image.";
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: dataUrl.split(",")[1] } }] }],
+    generationConfig: { responseMimeType: "application/json", temperature: 0.4 }
+  });
+  let lastErr = "";
+  for (const model of ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]) {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body
+    });
+    if (r.status === 404) { lastErr = "modèle indisponible"; continue; }
+    if (r.status === 400 || r.status === 403) throw new Error("clé refusée par Google");
+    if (r.status === 429) throw new Error("limite gratuite atteinte, réessaie plus tard");
+    if (!r.ok) { lastErr = "erreur " + r.status; continue; }
+    const j = await r.json();
+    const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
+    const raw = txt && txt[0] && txt[0].text ? txt[0].text : "";
+    const out = JSON.parse(raw.replace(/^```json|```$/g, "").trim());
+    return { title: String(out.title || "").slice(0, 80), category: String(out.category || ""), description: String(out.description || "").slice(0, 300) };
+  }
+  throw new Error(lastErr || "analyse impossible");
+}
+/* Analyse simple, sans clé : couleurs dominantes + texte lu sur l'image (OCR) */
+function colorNames(img){
+  const c = document.createElement("canvas"); c.width = c.height = 40;
+  const x = c.getContext("2d"); x.drawImage(img, 0, 0, 40, 40);
+  const d = x.getImageData(0, 0, 40, 40).data, count = {}; let n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, g = d[i+1] / 255, b = d[i+2] / 255;
+    const mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx + mn) / 2, dl = mx - mn;
+    let h = 0, sat = dl === 0 ? 0 : dl / (1 - Math.abs(2 * l - 1));
+    if (dl) { h = mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; h = (h * 60 + 360) % 360; }
+    let name;
+    if (l < .14) name = "noir"; else if (l > .9 && sat < .25) name = "blanc"; else if (sat < .16) name = l > .55 ? "gris clair" : "gris";
+    else if (h < 15 || h >= 345) name = l > .72 ? "rose" : "rouge";
+    else if (h < 40) name = l < .4 ? "marron" : "orange";
+    else if (h < 68) name = "jaune"; else if (h < 165) name = "vert"; else if (h < 200) name = "turquoise";
+    else if (h < 255) name = "bleu"; else if (h < 300) name = "violet"; else name = "rose";
+    count[name] = (count[name] || 0) + 1; n++;
+  }
+  return Object.keys(count).map(k => [k, count[k] / n]).filter(a => a[1] > .1).sort((a, b) => b[1] - a[1]).slice(0, 3).map(a => a[0]);
+}
+function loadScript(src){
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("chargement impossible")); document.head.appendChild(s); });
+}
+async function localAnalyze(dataUrl, cats){
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+  const colors = colorNames(img);
+  let lines = [];
+  try {
+    if (!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js");
+    const r = await window.Tesseract.recognize(dataUrl, "fra+eng");
+    lines = (r.data.lines || []).map(l => ({ t: l.text.replace(/[^\p{L}\p{N}' &.,!?-]+/gu, " ").replace(/\s+/g, " ").trim(), h: (l.bbox.y1 - l.bbox.y0), c: l.confidence }))
+      .filter(l => l.c > 55 && l.t.replace(/[^\p{L}]/gu, "").length >= 3);
+  } catch (e) { /* OCR indisponible : on garde les couleurs */ }
+  const text = lines.map(l => l.t).join(" ").toLowerCase();
+  let title = "";
+  if (lines.length) { const big = lines.slice().sort((a, b) => b.h - a.h)[0]; title = big.t.slice(0, 60); title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase(); }
+  // type : d'abord les mots lus, sinon la forme de l'image
+  let cat = "";
+  cats.forEach(c => { if (!cat) { const w = c.toLowerCase().split(/\s+/).filter(x => x.length > 3); if (w.some(x => text.indexOf(x.slice(0, Math.max(4, x.length - 1))) >= 0)) cat = c; } });
+  if (!cat && /anniversaire|birthday|bienvenue|promo|offre|services|prix|contact|culte|journée|événement|concert/.test(text)) cat = cats.find(c => /affiche/i.test(c)) || "";
+  if (!cat && lines.length <= 2 && colors.length <= 2) cat = cats.find(c => /logo/i.test(c)) || "";
+  if (!cat && lines.length >= 3) cat = cats.find(c => /affiche/i.test(c)) || "";
+  if (!cat) cat = cats[cats.length - 1];
+  const tones = colors.length ? "Visuel aux tons " + (colors.length > 1 ? colors.slice(0, -1).join(", ") + " et " + colors[colors.length - 1] : colors[0]) + "." : "";
+  const read = lines.length ? " Texte : « " + lines.slice(0, 3).map(l => l.t).join(" · ").slice(0, 140) + " »." : "";
+  return { title, category: cat, description: (tones + read).trim() };
+}
+let analyzing = false;
+window.analyzeCurrentPhoto = async function (force) {
+  if (!photoData || analyzing) return;
+  analyzing = true;
+  $("aiAgainBtn").classList.remove("hidden");
+  if (force) { autoFilled.projectName = autoFilled.projectCategory = autoFilled.projectDescription = true; }
+  say("aiMessage", "Analyse du visuel en cours…", true);
+  const cats = categoryList();
+  let res = null, how = "", err = "";
+  if (aiKeyCache) {
+    try { res = await geminiAnalyze(photoData, cats, aiKeyCache); how = "par l'IA"; }
+    catch (e) { err = e.message; }
+  }
+  if (!res) {
+    try { res = await localAnalyze(photoData, cats); how = "simple (texte et couleurs)"; }
+    catch (e) { err = err || e.message; }
+  }
+  analyzing = false;
+  if (!res) { say("aiMessage", "Analyse impossible (" + err + "). Remplis les champs à la main.", false); return; }
+  const match = cats.find(c => c.toLowerCase() === String(res.category).toLowerCase()) || "";
+  setAuto("projectName", res.title);
+  setAuto("projectCategory", match || cats[cats.length - 1]);
+  setAuto("projectDescription", res.description);
+  say("aiMessage", "Analyse " + how + " terminée" + (err && how.indexOf("simple") >= 0 ? " (l'IA n'a pas répondu : " + err + ")" : "") + ". Vérifie le titre, le type et la description, corrige si besoin, puis publie.", true);
+};
 
 /* ---------- Projets ---------- */
 function renderProjects(){
@@ -967,11 +1191,23 @@ function renderProjects(){
       ${p.image && /^data:image\//.test(p.image) ? `<img class="thumb" src="${p.image}" alt="">` : `<div class="thumb"></div>`}
       <div class="info"><strong>${escapeText(p.name)}</strong><div class="muted">${escapeText(p.category)} — ${escapeText(p.description)}</div></div>
       <button class="small danger" data-del="${escapeText(p.id)}">Supprimer</button>
+    </div>
+    <div class="actions">
+      <button class="small wa" data-sharewa="${escapeText(p.id)}">Partager sur WhatsApp</button>
+      <button class="small fb" data-sharefb="${escapeText(p.id)}">Partager sur Facebook</button>
+    </div>
+    <div class="actions hidden" id="fbacc_${escapeText(p.id)}">
+      <button class="small fb" data-shareacc="1" data-pid="${escapeText(p.id)}">Publier sur compte 1</button>
+      <button class="small fb" data-shareacc="2" data-pid="${escapeText(p.id)}">Publier sur compte 2</button>
     </div></div>`
   ).join("") : "<p class='muted'>Aucun projet pour le moment.</p>";
 }
 $("projectList").addEventListener("click", async e => {
-  const id = e.target.getAttribute && e.target.getAttribute("data-del");
+  const g = n => e.target.getAttribute && e.target.getAttribute(n);
+  const id = g("data-del"), wa = g("data-sharewa"), fb = g("data-sharefb"), acc = g("data-shareacc");
+  if (wa) { openShare(wa, "whatsapp", 0); return; }
+  if (fb) { const box = $("fbacc_" + fb); if (box) box.classList.toggle("hidden"); return; }
+  if (acc) { openShare(g("data-pid"), "facebook", Number(acc)); return; }
   if (!id) return;
   if (!confirm("Supprimer ce projet ?")) return;
   try {
@@ -980,6 +1216,88 @@ $("projectList").addEventListener("click", async e => {
     renderProjects();
   } catch (err) { say("projectMessage","Suppression impossible : " + err.code); }
 });
+
+/* ---------- Partage d'un projet : WhatsApp / Facebook (comptes 1 et 2) ---------- */
+let shareCtx = null;
+function projectShareText(p){
+  const d = p.description && p.description !== "Aucune description" ? " — " + p.description : "";
+  return p.name + d + "\n" + SITE_URL + "#travaux";
+}
+function dataUrlToFile(dataUrl, name){
+  const parts = dataUrl.split(","), mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/jpeg";
+  const bin = atob(parts[1]), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new File([u8], name, { type: mime });
+}
+function downloadImage(p){
+  const a = document.createElement("a");
+  a.href = p.image; a.download = (p.name || "visuel").replace(/[^\w-]+/g, "_") + ".jpg";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function waAppName(){ return waAppChoice() === "business" ? "WhatsApp Business" : "WhatsApp"; }
+function fbAppName(n){ const a = fbAppOf($("fbApp" + n).value); return a === "lite" ? "Facebook Lite" : a === "fb" ? "Facebook" : "Facebook"; }
+window.openShare = function (id, platform, account) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  shareCtx = { p, platform, account };
+  const hasImg = p.image && /^data:image\//.test(p.image);
+  const isWa = platform === "whatsapp";
+  const lab = !isWa && fbAccounts[account - 1] && fbAccounts[account - 1].label ? " (" + fbAccounts[account - 1].label + ")" : "";
+  $("shareTitle").textContent = isWa ? "Partager sur WhatsApp" : "Publier sur le compte " + account + lab;
+  $("shareSub").textContent = "« " + p.name + " » — " + (hasImg ? "l'image part avec la légende et le lien du site." : "ce projet n'a pas d'image : seul le texte avec le lien sera partagé.");
+  const opts = isWa
+    ? [["message", "Message", "Envoyer à un contact ou à un groupe"], ["story", "Statut", "Publier dans ton statut WhatsApp"]]
+    : [["message", "Message", "Envoyer à un ami par Messenger"], ["story", "Story", "Publier dans ta story Facebook"], ["profil", "Profil", "Publier sur ton profil (fil d'actualité)"]];
+  $("shareOptions").innerHTML = (!isWa ? `<button type="button" class="choice" data-open="1" style="background:#e8f0ff">Ouvrir d'abord le compte ${account}<small>Pour être sûr d'être connecté sur le bon compte (${fbAppName(account)})</small></button>` : "") +
+    opts.map(o => `<button type="button" class="choice" data-mode="${o[0]}">${o[1]}<small>${o[2]}</small></button>`).join("");
+  $("shareHint").classList.add("hidden");
+  $("shareModal").classList.remove("hidden");
+};
+window.closeShare = function () { $("shareModal").classList.add("hidden"); shareCtx = null; };
+$("shareModal").addEventListener("click", e => { if (e.target.id === "shareModal") closeShare(); });
+$("shareOptions").addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("button"); if (!b || !shareCtx) return;
+  if (b.getAttribute("data-open")) {
+    const n = shareCtx.account, url = facebookUrl(fbAccounts[n - 1] && fbAccounts[n - 1].url);
+    if (!url) { showHint("Enregistre d'abord le compte " + n + " dans « Mes comptes Facebook » (onglet Membres)."); return; }
+    openInFbApp(url, fbAccounts[n - 1].app); return;
+  }
+  runShare(b.getAttribute("data-mode"));
+});
+function showHint(t){ const h = $("shareHint"); h.textContent = t; h.classList.remove("hidden"); }
+async function runShare(mode){
+  const { p, platform, account } = shareCtx;
+  const text = projectShareText(p);
+  const hasImg = p.image && /^data:image\//.test(p.image);
+  copyText(text); // Facebook ignore souvent le texte envoyé : la légende est aussi copiée, il suffit de la coller
+  const isWa = platform === "whatsapp";
+  const app = isWa ? waAppName() : fbAppName(account);
+  const hints = isWa
+    ? { message: "Choisis « " + app + " », puis le contact ou le groupe. Appuie sur Envoyer.", story: "Choisis « " + app + " », puis « Mon statut ». Appuie sur Envoyer." }
+    : { message: "Choisis « Messenger », puis ton ami.", story: "Choisis « " + app + " », puis « Story » (compte " + account + ").", profil: "Choisis « " + app + " », puis « Fil d'actualité » (compte " + account + "). Si la légende n'apparaît pas, colle-la : elle est copiée." };
+  showHint(hints[mode] || "");
+  try {
+    if (hasImg && navigator.canShare) {
+      const file = dataUrlToFile(p.image, (p.name || "visuel").replace(/[^\w-]+/g, "_") + ".jpg");
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text, title: p.name }); return; }
+    } else if (!hasImg && navigator.share) { await navigator.share({ text, title: p.name }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  // Partage direct impossible (ordinateur, ancien navigateur) : image enregistrée + lien ouvert
+  if (hasImg) downloadImage(p);
+  if (isWa) {
+    waOpen("", text);
+    showHint("L'image est enregistrée sur cet appareil. " + (mode === "story" ? "Dans WhatsApp, ouvre « Statut » et ajoute l'image." : "Dans WhatsApp, choisis le contact et joins l'image enregistrée.") + " La légende est copiée.");
+  } else if (mode === "message") {
+    if (isMobile) location.href = "fb-messenger://share/?link=" + encodeURIComponent(SITE_URL + "#travaux"); else window.open("https://www.messenger.com/", "_blank", "noopener");
+    showHint("L'image est enregistrée : joins-la dans la conversation. La légende est copiée.");
+  } else if (mode === "story") {
+    openInFbApp("https://www.facebook.com/", fbAccounts[account - 1] && fbAccounts[account - 1].app);
+    showHint("L'image est enregistrée : dans " + app + ", crée une Story avec cette image. La légende est copiée.");
+  } else {
+    openInFbApp("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SITE_URL + "#travaux"), fbAccounts[account - 1] && fbAccounts[account - 1].app);
+    showHint("Le lien du site s'ouvre pour publication. L'image est enregistrée : ajoute-la à ta publication. La légende est copiée.");
+  }
+}
 window.addProject = async function () {
   const name = $("projectName").value.trim();
   if (!name) { alert("Entre le nom du projet."); return; }
@@ -998,6 +1316,8 @@ window.addProject = async function () {
     $("projectName").value = ""; $("projectDescription").value = "";
     $("projectPhoto").value = ""; photoData = "";
     $("photoPreview").classList.add("hidden");
+    $("aiAgainBtn").classList.add("hidden"); say("aiMessage","", true);
+    autoFilled.projectName = autoFilled.projectCategory = autoFilled.projectDescription = false;
     renderProjects();
     say("projectMessage","Projet ajouté et publié sur le site. Pense à prévenir tes membres (onglet Membres).", true);
     suggestNews(NEWS_PRESETS.visuels);
@@ -1029,6 +1349,62 @@ window.saveTexts = async function () {
     await setDoc(doc(db,"site","config"), config, {merge:true});
     say("textMessage","Textes enregistrés et publiés.", true);
   } catch (e) { say("textMessage","Échec : " + (e.code || e.message)); }
+};
+
+
+/* ---------- Tous les textes du site + photo du créateur ---------- */
+const TEXT_FIELDS = [{"k": "introBtn", "l": "Intro : texte sous l'étoile", "d": "Clique sur l'étoile", "m": false}, {"k": "headerJoin", "l": "Bouton jaune en haut à droite", "d": "Devenir membre", "m": false}, {"k": "navWorks", "l": "Menu : Travaux", "d": "Travaux", "m": false}, {"k": "navPrices", "l": "Menu : Tarifs", "d": "Tarifs", "m": false}, {"k": "navQuote", "l": "Menu : Devis", "d": "Devis", "m": false}, {"k": "navMember", "l": "Menu : Membre", "d": "Membre", "m": false}, {"k": "navContact", "l": "Menu : Contact", "d": "Contact", "m": false}, {"k": "heroBtn1", "l": "Accueil : bouton 1", "d": "Découvrir mes travaux", "m": false}, {"k": "heroBtn2", "l": "Accueil : bouton 2", "d": "Me contacter", "m": false}, {"k": "pitchTitle", "l": "Devenir membre : titre", "d": "Deviens membre, c'est gratuit", "m": false}, {"k": "pitchText", "l": "Devenir membre : texte pour convaincre", "d": "Sois le premier prévenu des nouveaux visuels, offres et tarifs, directement sur WhatsApp ou Facebook.", "m": true}, {"k": "pitchBtn", "l": "Devenir membre : bouton", "d": "Je deviens membre", "m": false}, {"k": "creatorRole", "l": "Créateur : rôle", "d": "Créateur du site", "m": false}, {"k": "creatorName", "l": "Créateur : nom", "d": "Emma", "m": false}, {"k": "whyText", "l": "Pourquoi ce site : texte", "d": "J'ai créé ce site pour montrer mes créations, recevoir vos demandes simplement et vous tenir informés de chaque nouveauté.", "m": true}, {"k": "worksTitle", "l": "Travaux : titre", "d": "Quelques créations", "m": false}, {"k": "worksIntro", "l": "Travaux : texte", "d": "Un aperçu de l'univers créatif de MINZOTO Lab. Touche une création pour la voir en grand.", "m": true}, {"k": "promoTitle", "l": "Promotions : titre", "d": "Promotions en cours", "m": false}, {"k": "promoIntro", "l": "Promotions : texte", "d": "Profite-en avant la fin de l'offre.", "m": false}, {"k": "pricesTitle", "l": "Tarifs : titre", "d": "Services & tarifs", "m": false}, {"k": "pricesIntro", "l": "Tarifs : texte", "d": "Voici des exemples de tarifs. Ils seront à personnaliser.", "m": true}, {"k": "quoteTitle", "l": "Devis : titre", "d": "Demander un devis", "m": false}, {"k": "quoteIntro", "l": "Devis : texte", "d": "Décris ton projet : tu reçois une réponse sur WhatsApp.", "m": true}, {"k": "quoteBtn", "l": "Devis : bouton d'envoi", "d": "Envoyer ma demande", "m": false}, {"k": "avisTitle", "l": "Témoignages : titre", "d": "Ils m'ont fait confiance", "m": false}, {"k": "memberTitle", "l": "Inscription membre : titre", "d": "Deviens membre", "m": false}, {"k": "memberIntro", "l": "Inscription membre : texte", "d": "Laisse ton numéro WhatsApp ou ton compte Facebook (ou les deux) pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ce n'est pas grave, il est facultatif.", "m": true}, {"k": "memberBtn", "l": "Inscription membre : bouton", "d": "Devenir membre", "m": false}, {"k": "contactTitle", "l": "Contact : titre", "d": "Un projet en tête ?", "m": false}, {"k": "contactIntro", "l": "Contact : texte", "d": "Parlons de votre prochaine création.", "m": false}, {"k": "contactBtn", "l": "Contact : bouton WhatsApp", "d": "Contacter sur WhatsApp", "m": false}, {"k": "floatBtn", "l": "Bouton WhatsApp flottant", "d": "WhatsApp", "m": false}];
+let creatorPhotoPending = undefined; // undefined = inchangée, "" = remise à l'origine, "data:…" = nouvelle photo
+function renderAllTexts(){
+  const st = config.siteTexts || {};
+  $("allTextFields").innerHTML = TEXT_FIELDS.map((f, i) => {
+    const v = st[f.k] != null && String(st[f.k]).trim() ? st[f.k] : f.d;
+    const field = f.m
+      ? `<textarea id="at_${i}" style="min-height:90px">${escapeText(v)}</textarea>`
+      : `<input id="at_${i}" value="${escapeText(v)}">`;
+    return `<label for="at_${i}">${escapeText(f.l)}</label>${field}`;
+  }).join("");
+  const photo = st.creatorPhoto;
+  if (photo && /^data:image\//.test(photo)) { $("creatorPreview").src = photo; $("creatorPreview").classList.remove("hidden"); }
+  else $("creatorPreview").classList.add("hidden");
+  say("creatorPhotoMsg", photo ? "Photo personnalisée en ligne." : "Photo d'origine du site en ligne.", true);
+}
+async function squarePhoto(file, size){
+  const im = await loadImage(file);
+  const side = Math.min(im.width, im.height);
+  const sx = (im.width - side) / 2, sy = (im.height - side) * 0.3;
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, size, size);
+  x.drawImage(im, sx, sy, side, side, 0, 0, size, size);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+$("creatorPhotoInput").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    creatorPhotoPending = await squarePhoto(f, 520);
+    $("creatorPreview").src = creatorPhotoPending; $("creatorPreview").classList.remove("hidden");
+    say("creatorPhotoMsg", "Nouvelle photo prête : appuie sur « Enregistrer tous les textes et la photo ».", true);
+  } catch (err) { say("creatorPhotoMsg", "Photo non utilisable."); }
+});
+window.resetCreatorPhoto = function () {
+  creatorPhotoPending = "";
+  $("creatorPreview").classList.add("hidden"); $("creatorPhotoInput").value = "";
+  say("creatorPhotoMsg", "La photo d'origine reviendra après l'enregistrement.", true);
+};
+window.saveAllTexts = async function () {
+  const out = {};
+  TEXT_FIELDS.forEach((f, i) => {
+    const v = $("at_" + i).value.trim();
+    if (v && v !== f.d) out[f.k] = v.slice(0, 600);
+  });
+  const old = (config.siteTexts || {}).creatorPhoto;
+  const photo = creatorPhotoPending === undefined ? old : creatorPhotoPending;
+  if (photo) out.creatorPhoto = photo;
+  try {
+    await setDoc(doc(db,"site","config"), { siteTexts: out }, { mergeFields: ["siteTexts"] });
+    config.siteTexts = out; creatorPhotoPending = undefined;
+    say("allTextMessage", "Textes et photo enregistrés et publiés sur le site.", true);
+  } catch (e) { say("allTextMessage", "Échec : " + (e.code || e.message)); }
 };
 
 /* ---------- Services ---------- */
