@@ -31,445 +31,329 @@ body {
   background: white;
 }
 header {
-  padding: 20px 6%;
+  padding: 15px 6%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #eee;
 }
-.logo { font-size: 23px; font-weight: 800; }
+.logo { font-size: 21px; font-weight: 800; }
 .logo span { color: var(--gold); }
+nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 nav a {
-  margin-left: 16px;
   color: #333;
   text-decoration: none;
   font-size: 14px;
 }
+nav a.btn-member-nav {
+  background: var(--gold);
+  color: var(--dark);
+  padding: 8px 14px;
+  border-radius: 5px;
+  font-weight: bold;
+}
 .hero {
-  padding: 75px 7%;
+  padding: 55px 7%;
   background: var(--light);
   text-align: center;
 }
-.stars { color: var(--gold); font-size: 36px; letter-spacing: 8px; }
-.logo-stars { width: 120px; height: auto; display: block; margin: 0 auto; overflow: visible; }
+.logo-stars { width: 100px; height: auto; display: block; margin: 0 auto; overflow: visible; }
 .logo-stars use { transform-box: fill-box; transform-origin: center; }
-@keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
-.logo-stars .s1 { animation: twinkle 3.6s ease-in-out infinite; }
-.logo-stars .s2 { animation: twinkle 3.6s ease-in-out .9s infinite; }
-.logo-stars .s3 { animation: twinkle 3.6s ease-in-out 1.8s infinite; }
+@keyframes twinkleFine { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.92); } }
+.logo-stars .s1 { animation: twinkleFine 4s ease-in-out infinite; }
+.logo-stars .s2 { animation: twinkleFine 3.2s ease-in-out 1s infinite; }
+.logo-stars .s3 { animation: twinkleFine 4.5s ease-in-out 2s infinite; }
 @media (prefers-reduced-motion: reduce) { .logo-stars use { animation: none !important; } }
 .hero h1 {
-  font-size: clamp(35px, 7vw, 65px);
-  margin: 18px 0;
-  line-height: 1.08;
+  font-size: clamp(30px, 6vw, 55px);
+  margin: 14px 0;
+  line-height: 1.1;
 }
 .hero h1 b { font-weight: inherit; }
 .hero h1 span { color: #c69a16; }
 .hero p {
   color: #666;
-  line-height: 1.8;
-  max-width: 600px;
-  margin: 18px auto 28px;
+  line-height: 1.6;
+  max-width: 550px;
+  margin: 14px auto 22px;
+  font-size: 15px;
 }
 .btn {
   display: inline-block;
-  padding: 14px 23px;
+  padding: 12px 20px;
   background: var(--dark);
   color: white;
   border-radius: 5px;
   text-decoration: none;
-  margin: 5px;
+  margin: 4px;
+  font-size: 14px;
 }
-.btn.gold { background: var(--gold); color: #171717; }
-section { padding: 55px 7%; }
-h2 { font-size: 30px; margin-bottom: 10px; }
-.intro { color: var(--muted); line-height: 1.7; }
+.btn.gold { background: var(--gold); color: #171717; font-weight: bold; }
+section { padding: 40px 7%; }
+h2 { font-size: 26px; margin-bottom: 8px; text-align: center; }
+.intro { color: var(--muted); line-height: 1.6; text-align: center; font-size: 14px; }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 18px;
-  margin-top: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 22px;
 }
 .card {
   border: 1px solid #eee;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   background: white;
 }
 .art {
-  height: 155px;
+  height: 140px;
   display: grid;
   place-items: center;
   background: #f3ead0;
   color: #665018;
-  font-size: 25px;
+  font-size: 22px;
   font-weight: bold;
+  overflow: hidden;
 }
-.art{overflow:hidden}
-.art img{width:100%;height:auto;display:block}
-.art.has-img{height:auto;display:block;background:#f4f4f2}
-#projectGrid{align-items:start}
-.card:nth-child(2) .art { background: #e7e7e7; }
-.card:nth-child(3) .art { background: #eee5e1; }
-.card:nth-child(4) .art { background: #e4e8dc; }
-.card-body { padding: 18px; }
-.card h3 { margin: 0 0 8px; }
-.price { font-weight: bold; color: #9c7810; }
+.art img { width: 100%; height: auto; display: block; }
+.art.has-img { height: auto; display: block; background: #f4f4f2; cursor: zoom-in; }
+.card-body { padding: 14px; }
+.card h3 { margin: 0 0 6px; font-size: 16px; }
+.price { font-weight: bold; color: #9c7810; font-size: 14px; }
 .services { background: var(--light); }
-.contact { text-align: center; }
+.creator-section {
+  background: #fff;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 15px;
+}
+.creator-img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+}
+.why-section {
+  background: var(--light);
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+  border-radius: 10px;
+  padding: 30px 20px;
+}
 footer {
-  padding: 25px;
+  padding: 20px;
   background: var(--dark);
   color: white;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
 }
 .hidden { display: none !important; }
 .news {
   background: var(--gold);
   color: #171717;
-  padding: 12px 6%;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.news button {
-  border: 0;
-  background: transparent;
-  color: #171717;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0 4px;
-}
-.member { text-align: center; }
-.form { max-width: 420px; margin: 24px auto 0; text-align: left; }
-.form label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
-.form input[type=email],
-.form input[type=text],
-.form select,
-.form textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 7px;
-  font: inherit;
-  font-size: 16px;
-  background: white;
-}
-.form textarea { min-height: 110px; resize: vertical; }
-.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-.form label.check {
+  padding: 10px 6%;
   display: flex;
   gap: 10px;
-  align-items: flex-start;
-  font-weight: normal;
+  align-items: center;
+  justify-content: space-between;
   font-size: 13px;
-  color: #555;
-  line-height: 1.5;
 }
-.form label.check input { margin-top: 3px; flex: none; }
-#mBtn, #qBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
-#mBtn:disabled, #qBtn:disabled { opacity: .6; cursor: default; }
-.hint { font-size: 13px; color: #777; margin: 8px 0 0; line-height: 1.5; }
-.mmsg { min-height: 20px; font-size: 14px; margin: 12px 0 0; text-align: center; }
+.news button { border: 0; background: transparent; color: #171717; font-size: 22px; cursor: pointer; }
+.form { max-width: 400px; margin: 20px auto 0; text-align: left; }
+.form label { display: block; font-size: 13px; font-weight: bold; margin: 12px 0 4px; }
+.form input[type=email], .form input[type=text], .form select, .form textarea {
+  width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font: inherit; font-size: 15px; background: white;
+}
+.form textarea { min-height: 90px; resize: vertical; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.form label.check { display: flex; gap: 8px; align-items: flex-start; font-weight: normal; font-size: 12px; color: #555; }
+#mBtn, #qBtn { width: 100%; margin: 14px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
+.hint { font-size: 12px; color: #777; margin: 6px 0 0; }
+.mmsg { min-height: 18px; font-size: 13px; margin: 10px 0 0; text-align: center; }
 .mmsg.ok { color: #2c6e2c; }
 .mmsg.err { color: #8d2222; }
-.quote, .member { text-align: center; }
-.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
-.chip {
-  border: 1px solid #ddd; background: white; color: #333;
-  padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer;
-}
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; justify-content: center; }
+.chip { border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 999px; font-size: 13px; cursor: pointer; }
 .chip.active { background: var(--dark); color: white; border-color: var(--dark); }
-.art.has-img { cursor: zoom-in; }
 .viewer {
-  position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.92);
+  position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.9);
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
 }
-.viewer img { max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 6px; }
-.viewer .cap { color: #eee; text-align: center; margin-top: 12px; max-width: 640px; font-size: 14px; line-height: 1.5; }
-.viewer button {
-  position: absolute; border: 0; background: rgba(255,255,255,.18); color: white;
-  width: 44px; height: 44px; border-radius: 50%; font-size: 26px; line-height: 1; cursor: pointer;
-}
-.viewer .x { top: 14px; right: 14px; }
+.viewer img { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; }
+.viewer .cap { color: #eee; text-align: center; margin-top: 10px; font-size: 13px; }
+.viewer button { position: absolute; border: 0; background: rgba(255,255,255,.2); color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; }
+.viewer .x { top: 12px; right: 12px; }
 .viewer .prev { left: 10px; top: 50%; }
 .viewer .next { right: 10px; top: 50%; }
 .wa-float {
-  position: fixed; right: 16px; bottom: 16px; z-index: 40;
-  background: #25d366; color: #fff; padding: 13px 18px; border-radius: 999px;
-  text-decoration: none; font-weight: bold; font-size: 15px;
-  display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.28);
+  position: fixed; right: 14px; bottom: 14px; z-index: 40;
+  background: #25d366; color: #fff; padding: 11px 16px; border-radius: 999px;
+  text-decoration: none; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
-.wa-float svg { width: 22px; height: 22px; flex: none; }
-.promo { background: #fff6d8; }
-.promo-card { border-color: #ecd58a; }
-.badge {
-  display: inline-block; background: var(--gold); color: #171717;
-  font-weight: bold; font-size: 12px; padding: 4px 9px; border-radius: 999px; margin-bottom: 8px;
-}
-.when { color: #8d2222; font-weight: bold; font-size: 13px; margin: 8px 0 0; }
-.avis { font-style: italic; line-height: 1.7; color: #444; margin: 0 0 12px; }
-.who { font-weight: bold; margin: 0; color: #9c7810; font-size: 14px; }
-@media(max-width:600px) {
-  header { padding: 17px 5%; flex-wrap: wrap; gap: 8px 12px; }
-  footer { padding-bottom: 84px; }
-  nav a { margin-left: 8px; font-size: 12px; }
-  .logo { font-size: 19px; }
-  .hero { padding: 55px 6%; }
-  section { padding: 42px 6%; }
-}
-/* ---------- Intro : une étoile sur fond noir ---------- */
+.wa-float svg { width: 20px; height: 20px; fill: #fff; }
+
+/* ---------- Intro fluide sans cercle ---------- */
 html.introOn { overflow: hidden; }
 #intro {
   position: fixed; inset: 0; z-index: 9999; background: #000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
-  transition: background 1.5s ease, opacity .7s ease;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  transition: background 1.2s ease, opacity .6s ease;
 }
 #intro.white { background: #fff; }
 #intro.out { opacity: 0; pointer-events: none; }
 #introSvg {
-  width: min(92vw, 540px); height: auto; overflow: visible; display: block;
-  animation: introBlink 1.3s ease-in-out infinite;
+  width: min(85vw, 400px); height: auto; overflow: visible; display: block;
+  animation: introPulse 2s ease-in-out infinite;
 }
 #introStar { cursor: pointer; outline: none; }
 #introSvg g.o { transform-box: fill-box; transform-origin: center; }
-/* La grande étoile est d'abord au centre de l'écran, puis revient à sa place dans le logo */
 #introSvg .o1 { transform: translate(93px, 17.5px); }
 #introSvg .o2, #introSvg .o3 { opacity: 0; }
-@keyframes introBlink {
-  0%, 100% { opacity: .3; filter: drop-shadow(0 0 3px rgba(255,221,18,.35)); }
-  50% { opacity: 1; filter: drop-shadow(0 0 22px #ffdd12) drop-shadow(0 0 60px #ffdd12) drop-shadow(0 0 110px rgba(255,221,18,.8)); }
+@keyframes introPulse {
+  0%, 100% { opacity: .4; filter: drop-shadow(0 0 4px rgba(255,221,18,0.3)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 18px #ffdd12) drop-shadow(0 0 35px rgba(255,221,18,0.7)); }
 }
-#intro.go #introSvg { animation: introGlow 3.4s ease-in forwards; }
-@keyframes introGlow {
-  0% { opacity: 1; filter: drop-shadow(0 0 14px #ffdd12) drop-shadow(0 0 40px #ffdd12); }
-  45% { opacity: 1; filter: drop-shadow(0 0 40px #fff2a0) drop-shadow(0 0 100px #ffdd12) drop-shadow(0 0 180px #ffdd12) brightness(1.4); }
-  80% { opacity: 1; filter: drop-shadow(0 0 70px #fff) drop-shadow(0 0 160px #fff2a0) drop-shadow(0 0 260px #ffdd12) brightness(2); }
-  100% { opacity: 0; filter: drop-shadow(0 0 90px #fff) brightness(3); }
-}
-#intro.go .o1 { transform: none; transition: transform 1s cubic-bezier(.65,0,.3,1); }
-#intro.go .o2 { animation: introIn 1.1s cubic-bezier(.2,.8,.3,1) 1s both, introSway 1.7s ease-in-out 2.1s infinite alternate; }
-#intro.go .o3 { animation: introIn 1.1s cubic-bezier(.2,.8,.3,1) 1.35s both, introSway 1.9s ease-in-out 2.45s infinite alternate-reverse; }
-@keyframes introIn {
-  0% { opacity: 0; transform: scale(.05) rotate(-160deg); }
-  60% { opacity: 1; }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
-}
-@keyframes introSway {
-  from { transform: rotate(-8deg) scale(1); }
-  to { transform: rotate(8deg) scale(1.06); }
+#intro.go #introSvg { animation: introFadeOut 1.5s ease-in forwards; }
+@keyframes introFadeOut {
+  0% { opacity: 1; filter: drop-shadow(0 0 12px #ffdd12); }
+  100% { opacity: 0; filter: drop-shadow(0 0 40px #fff); }
 }
 #introBtn {
-  font: inherit; font-size: 17px; font-weight: 700; letter-spacing: .02em;
-  padding: 15px 28px; min-height: 48px; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 700;
+  padding: 12px 24px; cursor: pointer;
   background: transparent; color: #ffdd12; border: 2px solid #ffdd12; border-radius: 6px;
-  transition: opacity .5s ease, transform .5s ease, background .2s ease, color .2s ease;
+  transition: all 0.3s ease;
 }
-#introBtn:hover, #introBtn:focus-visible { background: #ffdd12; color: #000; outline: none; }
-#intro.go #introBtn { opacity: 0; transform: translateY(10px); pointer-events: none; }
-@media (prefers-reduced-motion: reduce) {
-  #introSvg, #intro.go .o2, #intro.go .o3 { animation-duration: .01s !important; }
-  #intro.go .o1 { transition-duration: .01s; }
-}
+#introBtn:hover { background: #ffdd12; color: #000; }
 </style>
-<noscript><style>#intro { display: none !important; }</style></noscript>
 </head>
 <body>
 <div id="intro" role="dialog" aria-label="Introduction MINZOTO Lab">
-  <svg id="introSvg" viewBox="240 20 610 485" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg id="introSvg" viewBox="240 20 610 485" xmlns="http://www.w3.org/2000/svg">
     <defs><path id="introPath" d="M0,-1 Q0.27,-0.27 1,0 Q0.27,0.27 0,1 Q-0.27,0.27 -1,0 Q-0.27,-0.27 0,-1Z"/></defs>
     <g fill="#ffdd12">
-      <g class="o o1" id="introStar" role="button" tabindex="0" aria-label="Clique sur l'étoile pour entrer">
+      <g class="o o1" id="introStar" role="button" tabindex="0">
         <use href="#introPath" transform="translate(452 245) scale(197 215)"/>
       </g>
-      <g class="o o2"><use href="#introPath" transform="translate(672 128) scale(95 100)"/></g>
-      <g class="o o3"><use href="#introPath" transform="translate(698 355) scale(135 137)"/></g>
     </g>
   </svg>
-  <button id="introBtn" type="button">Clique sur l'étoile</button>
+  <button id="introBtn" type="button">Entrer dans MINZOTO Lab</button>
 </div>
 <script>document.documentElement.classList.add("introOn");</script>
-<div id="newsBar" class="news hidden" role="status">
+
+<div id="newsBar" class="news hidden">
   <span><b>Nouveau :</b><span id="newsText"></span></span>
-  <button id="newsClose" type="button" aria-label="Fermer l'annonce">×</button>
+  <button id="newsClose" type="button">×</button>
 </div>
+
 <header>
   <div class="logo">MINZOTO <span>Lab</span></div>
   <nav>
     <a href="#travaux">Travaux</a>
     <a href="#services">Tarifs</a>
     <a href="#devis">Devis</a>
-    <a href="#membre">Membre</a>
     <a href="#contact">Contact</a>
+    <a href="#membre" class="btn-member-nav">Devenir membre</a>
   </nav>
 </header>
 
 <main>
   <div class="hero">
-    <svg class="logo-stars" viewBox="240 20 610 485" role="img" aria-label="Trois étoiles MINZOTO Lab" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <path id="star" d="M0,-1 Q0.27,-0.27 1,0 Q0.27,0.27 0,1 Q-0.27,0.27 -1,0 Q-0.27,-0.27 0,-1Z"/>
-      </defs>
+    <svg class="logo-stars" viewBox="240 20 610 485" xmlns="http://www.w3.org/2000/svg">
+      <defs><path id="star" d="M0,-1 Q0.27,-0.27 1,0 Q0.27,0.27 0,1 Q-0.27,0.27 -1,0 Q-0.27,-0.27 0,-1Z"/></defs>
       <g fill="#ffdd12">
         <use class="s1" href="#star" transform="translate(452 245) scale(197 215)"/>
         <use class="s2" href="#star" transform="translate(672 128) scale(95 100)"/>
         <use class="s3" href="#star" transform="translate(698 355) scale(135 137)"/>
       </g>
     </svg>
-    <h1><b id="heroT1">Les idées deviennent</b><br><span id="heroT2">des créations.</span></h1>
-    <p id="heroText">
-      Bienvenue chez MINZOTO Lab, votre studio créatif.
-      Identité visuelle, affiches, portraits numériques et retouche photo
-      pour donner vie à vos idées.
-    </p>
-    <a class="btn gold" href="#travaux">Découvrir mes travaux</a>
-    <a class="btn" href="#contact">Me contacter</a>
+    <h1 id="heroMainTitle"><b>Les idées deviennent</b><br><span>des créations.</span></h1>
+    <p id="heroText">Identité visuelle, affiches et portraits pour donner vie à vos projets.</p>
+    <a class="btn gold" href="#travaux">Voir mes travaux</a>
+    <a class="btn" href="#devis">Demander un devis</a>
   </div>
 
   <section id="travaux">
-    <h2>Quelques créations</h2>
-    <p class="intro">Un aperçu de l'univers créatif de MINZOTO Lab. Touche une création pour la voir en grand.</p>
+    <h2>Créations</h2>
+    <p class="intro">Touche une création pour l'agrandir.</p>
     <div class="chips hidden" id="catChips"></div>
-    <div class="grid" id="projectGrid">
-      <article class="card">
-        <div class="art">LOGO DESIGN</div>
-        <div class="card-body">
-          <h3>Identité visuelle</h3>
-          <p class="intro">Des logos uniques pour vos projets et entreprises.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="art">AFFICHE</div>
-        <div class="card-body">
-          <h3>Affiches & flyers</h3>
-          <p class="intro">Des visuels clairs, créatifs et mémorables.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="art">PORTRAIT</div>
-        <div class="card-body">
-          <h3>Portrait numérique</h3>
-          <p class="intro">Des portraits artistiques personnalisés.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="art">PHOTO RETOUCH</div>
-        <div class="card-body">
-          <h3>Retouche photo</h3>
-          <p class="intro">Des images améliorées avec soin et précision.</p>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="promo hidden" id="promos">
-    <h2>Promotions en cours</h2>
-    <p class="intro">Profite-en avant la fin de l'offre.</p>
-    <div class="grid" id="promoGrid"></div>
+    <div class="grid" id="projectGrid"></div>
   </section>
 
   <section class="services" id="services">
-    <h2>Services & tarifs</h2>
-    <p class="intro">Voici des exemples de tarifs. Ils seront à personnaliser.</p>
-    <div class="grid" id="serviceGrid">
-      <article class="card"><div class="card-body">
-        <h3>Création de logo</h3>
-        <p class="price">Prix sur demande</p>
-      </div></article>
-      <article class="card"><div class="card-body">
-        <h3>Affiche publicitaire</h3>
-        <p class="price">Prix sur demande</p>
-      </div></article>
-      <article class="card"><div class="card-body">
-        <h3>Portrait numérique</h3>
-        <p class="price">Prix sur demande</p>
-      </div></article>
-    </div>
+    <h2>Tarifs</h2>
+    <div class="grid" id="serviceGrid"></div>
+  </section>
+
+  <section class="creator-section" id="createur">
+    <img id="creatorPhoto" src="creator-placeholder.jpg" alt="Créateur MINZOTO Lab" class="creator-img">
+    <h2>Le Créateur</h2>
+    <p class="intro" id="creatorBio" style="max-width: 500px;">Fondateur de MINZOTO Lab, graphiste et directeur artistique passionné par l'art visuel et le design minimaliste.</p>
+  </section>
+
+  <section class="why-section" id="pourquoi">
+    <h2>Pourquoi MINZOTO Lab ?</h2>
+    <p class="intro">Ce studio a été créé pour offrir aux entrepreneurs, artistes et créateurs des visuels professionnels, uniques et percutants afin de valoriser leur image de marque avec exigence et simplicité.</p>
   </section>
 
   <section id="devis" class="quote">
-    <h2>Demander un devis</h2>
-    <p class="intro">Décris ton projet : tu reçois une réponse sur WhatsApp.</p>
+    <h2>Devis rapide</h2>
     <form id="quoteForm" class="form" novalidate>
       <label for="qName">Nom et prénom</label>
-      <input id="qName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
-      <label for="qWa">Ton numéro WhatsApp</label>
-      <input id="qWa" type="text" inputmode="tel" autocomplete="tel" placeholder="Ex. 081 234 5678">
-      <p class="hint">Écris-le comme d'habitude. Hors RDC, commence par + et l'indicatif de ton pays.</p>
-      <label for="qService">Service souhaité</label>
+      <input id="qName" type="text" placeholder="Ex. Jean Mukendi">
+      <label for="qWa">WhatsApp</label>
+      <input id="qWa" type="text" inputmode="tel" placeholder="Ex. 081 234 5678">
+      <label for="qService">Service</label>
       <select id="qService"></select>
-      <label for="qBudget">Budget (facultatif)</label>
-      <input id="qBudget" type="text" placeholder="Ex. 50 $" maxlength="60">
-      <label for="qDelay">Délai souhaité (facultatif)</label>
-      <input id="qDelay" type="text" placeholder="Ex. pour vendredi" maxlength="60">
-      <label for="qText">Décris ton projet</label>
-      <textarea id="qText" placeholder="Ex. Je voudrais un logo pour mon salon de coiffure, en noir et or." maxlength="1500"></textarea>
-      <input class="hp" id="qHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="btn gold" id="qBtn" type="submit">Envoyer ma demande</button>
-      <p id="qOut" class="mmsg" role="status"></p>
+      <label for="qText">Description du projet</label>
+      <textarea id="qText" placeholder="Décrivez votre besoin..."></textarea>
+      <input class="hp" id="qHp" type="text">
+      <button class="btn gold" id="qBtn" type="submit">Envoyer sur WhatsApp</button>
+      <p id="qOut" class="mmsg"></p>
     </form>
-  </section>
-
-  <section id="avis" class="hidden">
-    <h2>Ils m'ont fait confiance</h2>
-    <div class="grid" id="avisGrid"></div>
   </section>
 
   <section id="membre" class="member">
     <h2>Deviens membre</h2>
-    <p class="intro">Laisse ton numéro WhatsApp ou ton compte Facebook (ou les deux) pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ce n'est pas grave, il est facultatif.</p>
+    <p class="intro">Reçois en avant-première nos offres exclusives, nos nouveaux visuels et nos mises à jour de tarifs directement sur WhatsApp ou Facebook !</p>
     <form id="memberForm" class="form" novalidate>
       <label for="mName">Nom et prénom</label>
-      <input id="mName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
-      <label for="mWa">Numéro WhatsApp</label>
-      <input id="mWa" type="text" inputmode="tel" autocomplete="tel" placeholder="Ex. 081 234 5678">
-      <p class="hint">Écris-le comme d'habitude. Si tu es hors de la RDC, commence par + et l'indicatif de ton pays (ex. +33 6 12 34 56 78).</p>
-      <label for="mFb">Compte Facebook (lien de ton profil ou ton nom Facebook)</label>
-      <input id="mFb" type="text" autocomplete="off" placeholder="facebook.com/ton.profil" maxlength="200">
-      <p class="hint">Remplis au moins WhatsApp ou Facebook. Le Gmail est facultatif.</p>
-      <label for="mEmail">Adresse Gmail (facultatif)</label>
-      <input id="mEmail" type="email" autocomplete="email" placeholder="ton@gmail.com">
+      <input id="mName" type="text" placeholder="Ex. Jean Mukendi">
+      <label for="mWa">WhatsApp</label>
+      <input id="mWa" type="text" inputmode="tel" placeholder="Ex. 081 234 5678">
+      <label for="mFb">Facebook</label>
+      <input id="mFb" type="text" placeholder="facebook.com/ton.profil">
       <label class="check" for="mConsent">
         <input id="mConsent" type="checkbox">
-        <span>J'accepte que MINZOTO Lab me contacte par email ou WhatsApp pour me donner ses nouveautés.</span>
+        <span>J'accepte de recevoir les nouveautés de MINZOTO Lab.</span>
       </label>
-      <button class="btn gold" id="mBtn" type="submit">Devenir membre</button>
-      <p id="mMsg" class="mmsg" role="status"></p>
+      <button class="btn gold" id="mBtn" type="submit">Rejoindre les membres</button>
+      <p id="mMsg" class="mmsg"></p>
     </form>
-    <p id="mDone" class="mmsg ok hidden">Merci, tu es membre ! Tu seras prévenu(e) des nouveautés de MINZOTO Lab.</p>
-  </section>
-
-  <section id="contact" class="contact">
-    <h2>Un projet en tête ?</h2>
-    <p class="intro">Parlons de votre prochaine création.</p>
-    <a class="btn gold" id="waBtn"
-       href="https://wa.me/243835263914?text=Bonjour%20MINZOTO%20Lab%2C%20j%27aimerais%20discuter%20d%27un%20projet."
-       target="_blank" rel="noopener">Contacter sur WhatsApp</a>
+    <p id="mDone" class="mmsg ok hidden">Félicitations, tu es membre !</p>
   </section>
 </main>
 
-<div id="viewer" class="viewer hidden" role="dialog" aria-modal="true" aria-label="Création en grand">
-  <button class="x" id="vClose" type="button" aria-label="Fermer">×</button>
-  <button class="prev" id="vPrev" type="button" aria-label="Création précédente">‹</button>
+<div id="viewer" class="viewer hidden">
+  <button class="x" id="vClose">×</button>
+  <button class="prev" id="vPrev">‹</button>
   <img id="vImg" alt="">
   <div class="cap" id="vCap"></div>
-  <button class="next" id="vNext" type="button" aria-label="Création suivante">›</button>
+  <button class="next" id="vNext">›</button>
 </div>
 
-<a id="waFloat" class="wa-float" target="_blank" rel="noopener" aria-label="Discuter sur WhatsApp"
-   href="https://wa.me/243835263914?text=Bonjour%20MINZOTO%20Lab%2C%20j%27aimerais%20discuter%20d%27un%20projet.">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="#fff"/></svg>
+<a id="waFloat" class="wa-float" target="_blank" rel="noopener" href="https://wa.me/243835263914">
+  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.9-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm4.3-5.7c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.6.1-.7.8-.9 1-.2.2-.4.1a6.6 6.6 0 0 1-2-1.2 7.3 7.3 0 0 1-1.3-1.6c-.1-.2 0-.3.1-.4s.2-.3.3-.4a1 1 0 0 0 .1-.5c0-.2 0-.4-.1-.6s-.6-1.5-.8-2c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.8.5c-.3.7-.3 1.5 0 2.2s1.3 2.7 3.2 3.8a11 11 0 0 0 3.7 1.3 2.7 2.7 0 0 0 1.2 0 1.9 1.9 0 0 0 1.2-.8 1.5 1.5 0 0 0 .1-.8z"/></svg>
   <span>WhatsApp</span>
 </a>
 
-<footer id="footerText">
-  © 2026 MINZOTO Lab — Studio créatif
-</footer>
+<footer id="footerText">© 2026 MINZOTO Lab — Studio créatif</footer>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, addDoc, query, orderBy, serverTimestamp }
@@ -484,8 +368,6 @@ const app = initializeApp({
 const db = getFirestore(app);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-// Numéro WhatsApp écrit comme d'habitude (081 234 5678, +243 81 234 5678, 0033 6…) → chiffres avec indicatif.
-// Sans indicatif, c'est l'indicatif de la RDC (243) qui est ajouté.
 function normPhone(raw) {
   const s = String(raw || "").trim();
   const d = s.replace(/\D/g, "");
@@ -497,324 +379,66 @@ function normPhone(raw) {
   return d;
 }
 function phoneOk(n) { return /^\d{8,15}$/.test(n) && (n.slice(0, 3) !== "243" || n.length === 12); }
-["mWa", "qWa"].forEach(id => {
-  const el = document.getElementById(id);
-  el.addEventListener("blur", () => { const n = normPhone(el.value); if (el.value.trim() && phoneOk(n)) el.value = "+" + n; });
-});
 
-// Galerie : les projets ajoutés dans l'administration (filtre par catégorie + visionneuse)
 let works = [], shown = [], curCat = "Tout", viewerIdx = -1;
 const hasImg = p => !!(p && p.image && /^data:image\//.test(p.image));
+
 function renderGallery() {
   shown = curCat === "Tout" ? works : works.filter(p => p.category === curCat);
   document.getElementById("projectGrid").innerHTML = shown.map((p, i) => {
     const has = hasImg(p);
-    const img = has
-      ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">`
-      : esc((p.category || "").toUpperCase());
-    return `<article class="card"><div class="art${has ? " has-img" : ""}"${has ? ` data-view="${i}"` : ""}>${img}</div><div class="card-body"><h3>${esc(p.name)}</h3><p class="intro">${esc(p.category)} — ${esc(p.description)}</p></div></article>`;
+    const img = has ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">` : esc(p.category || "");
+    const siteUrl = window.location.href.split('#')[0];
+    const shareText = encodeURIComponent(`Découvre cette création de MINZOTO Lab : ${p.name}\n${siteUrl}`);
+    const waShare = `https://wa.me/?text=${shareText}`;
+    const fbShare = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(siteUrl)}`;
+    
+    return `<article class="card">
+      <div class="art${has ? " has-img" : ""}"${has ? ` data-view="${i}"` : ""}>${img}</div>
+      <div class="card-body">
+        <h3>${esc(p.name)}</h3>
+        <p class="intro" style="text-align:left;">${esc(p.description)}</p>
+        <div style="display:flex; gap:6px; margin-top:10px;">
+          <a href="${waShare}" target="_blank" rel="noopener" class="btn" style="padding:6px 10px; font-size:11px; background:#25d366; color:#fff; margin:0;">Partager WA</a>
+          <a href="${fbShare}" target="_blank" rel="noopener" class="btn" style="padding:6px 10px; font-size:11px; background:#0866ff; color:#fff; margin:0;">Partager FB</a>
+        </div>
+      </div>
+    </article>`;
   }).join("");
 }
-function renderChips() {
-  const cats = Array.from(new Set(works.map(p => p.category).filter(Boolean)));
-  const box = document.getElementById("catChips");
-  if (cats.length < 2) { box.classList.add("hidden"); return; }
-  box.classList.remove("hidden");
-  box.innerHTML = ["Tout"].concat(cats).map(c =>
-    `<button type="button" class="chip${c === curCat ? " active" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`
-  ).join("");
-}
+
 try {
   const snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
-  if (!snap.empty) { works = snap.docs.map(d => d.data()); renderChips(); renderGallery(); }
-} catch (e) { console.warn("Projets non chargés", e); }
-document.getElementById("catChips").addEventListener("click", e => {
-  const c = e.target.getAttribute && e.target.getAttribute("data-cat");
-  if (c === null || c === undefined) return;
-  curCat = c; renderChips(); renderGallery();
-});
-function showViewer(i) {
-  const p = shown[i];
-  if (!hasImg(p)) return;
-  viewerIdx = i;
-  document.getElementById("vImg").src = p.image;
-  document.getElementById("vImg").alt = p.name || "";
-  const desc = p.description && p.description !== "Aucune description" ? " — " + p.description : "";
-  document.getElementById("vCap").textContent = (p.name || "") + desc;
-  document.getElementById("viewer").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-}
-function stepViewer(dir) {
-  let i = viewerIdx;
-  for (let k = 0; k < shown.length; k++) {
-    i = (i + dir + shown.length) % shown.length;
-    if (hasImg(shown[i])) { showViewer(i); return; }
-  }
-}
-function closeViewer() {
-  document.getElementById("viewer").classList.add("hidden");
-  document.getElementById("vImg").removeAttribute("src");
-  document.body.style.overflow = "";
-}
-document.getElementById("projectGrid").addEventListener("click", e => {
-  const el = e.target.closest && e.target.closest("[data-view]");
-  if (el) showViewer(Number(el.getAttribute("data-view")));
-});
-document.getElementById("vClose").addEventListener("click", closeViewer);
-document.getElementById("vPrev").addEventListener("click", () => stepViewer(-1));
-document.getElementById("vNext").addEventListener("click", () => stepViewer(1));
-document.getElementById("viewer").addEventListener("click", e => { if (e.target.id === "viewer") closeViewer(); });
-document.addEventListener("keydown", e => {
-  if (document.getElementById("viewer").classList.contains("hidden")) return;
-  if (e.key === "Escape") closeViewer();
-  else if (e.key === "ArrowLeft") stepViewer(-1);
-  else if (e.key === "ArrowRight") stepViewer(1);
-});
+  if (!snap.empty) { works = snap.docs.map(d => d.data()); renderGallery(); }
+} catch (e) { console.warn(e); }
 
-// Liste des services proposée dans le formulaire de devis
-function fillQuoteServices(list) {
-  document.getElementById("qService").innerHTML = list.concat(["Autre (je l'explique ci-dessous)"])
-    .map(n => `<option>${esc(n)}</option>`).join("");
-}
-fillQuoteServices(["Création de logo", "Affiche publicitaire", "Portrait numérique"]);
-
-// Tarifs et services
 try {
   const c = await getDoc(doc(db,"site","config"));
   if (c.exists()) {
-    const d = c.data(), pr = d.prices || {};
-    const t = d.texts || {};
-    const setText = (id, v) => { if (v && String(v).trim()) document.getElementById(id).textContent = v; };
-    setText("heroT1", t.heroTitle1); setText("heroT2", t.heroTitle2);
-    setText("heroText", t.heroText); setText("footerText", t.footer);
-    if (t.whatsapp) {
-      const n = String(t.whatsapp).replace(/\D/g, "");
-      if (n.length >= 8) document.getElementById("waBtn").href =
-        "https://wa.me/" + n + "?text=" + encodeURIComponent("Bonjour MINZOTO Lab, j'aimerais discuter d'un projet.");
-    }
-    const base = [
-      ["Création de logo", pr.logo],
-      ["Affiche publicitaire", pr.poster],
-      ["Portrait numérique", pr.portrait]
-    ];
-    const names = base.map(b => b[0]);
-    const services = Array.isArray(d.services) ? d.services : names;
-    const cards = [];
-    base.forEach(([n, price]) => { if (services.includes(n)) cards.push([n, price || "Prix sur demande"]); });
-    const extras = Array.isArray(d.extras) ? d.extras : [];
-    services.filter(s => !names.includes(s)).forEach(s => {
-      const x = extras.find(e => e && e.name === s);
-      cards.push([s, (x && String(x.price || "").trim()) || "Prix sur demande"]);
-    });
-    if (cards.length) {
-      document.getElementById("serviceGrid").innerHTML = cards.map(([n, price]) =>
-        `<article class="card"><div class="card-body"><h3>${esc(n)}</h3><p class="price">${esc(price)}</p></div></article>`
-      ).join("");
-      fillQuoteServices(cards.map(c => c[0]));
-    }
+    const d = c.data(), t = d.texts || {};
+    if (t.heroTitle1) document.getElementById("heroMainTitle").innerHTML = `<b>${esc(t.heroTitle1)}</b><br><span>${esc(t.heroTitle2 || "")}</span>`;
+    if (t.heroText) document.getElementById("heroText").textContent = t.heroText;
+    if (t.creatorBio) document.getElementById("creatorBio").textContent = t.creatorBio;
+    if (t.creatorPhoto) document.getElementById("creatorPhoto").src = t.creatorPhoto;
+    if (t.whatsapp) document.getElementById("waFloat").href = `https://wa.me/${String(t.whatsapp).replace(/\D/g,"")}`;
   }
-} catch (e) { console.warn("Tarifs non chargés", e); }
-// Le bouton WhatsApp flottant utilise le même numéro que le bouton « Contacter sur WhatsApp »
-document.getElementById("waFloat").href = document.getElementById("waBtn").href;
+} catch (e) {}
 
-// Promotions en cours : une offre dont la date de fin est passée disparaît toute seule
-try {
-  const snap = await getDocs(query(collection(db,"offers"), orderBy("createdAt","desc")));
-  const now = new Date(), pad = n => String(n).padStart(2, "0");
-  const today = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
-  const active = snap.docs.map(d => d.data()).filter(o => o.title && (!o.endDate || o.endDate >= today));
-  if (active.length) {
-    document.getElementById("promoGrid").innerHTML = active.map(o => {
-      let when = "";
-      if (o.endDate) {
-        const left = Math.ceil((new Date(o.endDate + "T23:59:59") - now) / 86400000);
-        const [y, m, d] = o.endDate.split("-");
-        when = left <= 1 ? "Dernier jour !" : left <= 7 ? "Plus que " + left + " jours" : "Jusqu'au " + d + "/" + m + "/" + y;
-      }
-      return `<article class="card promo-card"><div class="card-body"><span class="badge">PROMO</span><h3>${esc(o.title)}</h3>`
-        + (o.description ? `<p class="intro">${esc(o.description)}</p>` : "")
-        + (o.price ? `<p class="price">${esc(o.price)}</p>` : "")
-        + (when ? `<p class="when">${esc(when)}</p>` : "")
-        + `</div></article>`;
-    }).join("");
-    document.getElementById("promos").classList.remove("hidden");
-  }
-} catch (e) { console.warn("Promotions non chargées", e); }
-
-// Témoignages de clients
-try {
-  const snap = await getDocs(query(collection(db,"testimonials"), orderBy("createdAt","desc")));
-  if (!snap.empty) {
-    document.getElementById("avisGrid").innerHTML = snap.docs.map(d => {
-      const t = d.data();
-      return `<article class="card"><div class="card-body"><p class="avis">« ${esc(t.text)} »</p><p class="who">${esc(t.name)}${t.role ? " · " + esc(t.role) : ""}</p></div></article>`;
-    }).join("");
-    document.getElementById("avis").classList.remove("hidden");
-  }
-} catch (e) { console.warn("Témoignages non chargés", e); }
-
-// Demande de devis (reçue dans l'administration)
-const quoteForm = document.getElementById("quoteForm");
-function qSay(text, ok) { const o = document.getElementById("qOut"); o.textContent = text; o.className = "mmsg " + (ok ? "ok" : "err"); }
-quoteForm.addEventListener("submit", async ev => {
-  ev.preventDefault();
-  if (document.getElementById("qHp").value) { qSay("Merci ! Ta demande est bien reçue.", true); return; } // anti-robot
-  const name = document.getElementById("qName").value.trim().replace(/\s+/g, " ");
-  const wa = normPhone(document.getElementById("qWa").value);
-  const service = document.getElementById("qService").value.slice(0, 80);
-  const budget = document.getElementById("qBudget").value.trim().slice(0, 60);
-  const delay = document.getElementById("qDelay").value.trim().slice(0, 60);
-  const message = document.getElementById("qText").value.trim();
-  if (name.length < 2 || name.length > 80) { qSay("Entre ton nom et ton prénom."); return; }
-  if (!phoneOk(wa)) { qSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
-  if (message.length < 5) { qSay("Décris ton projet en quelques mots."); return; }
-  if (message.length > 1500) { qSay("Ta description est trop longue (1500 caractères maximum)."); return; }
-  try {
-    const last = Number(localStorage.getItem("mz_quote_t") || 0);
-    if (Date.now() - last < 60000) { qSay("Ta demande vient d'être envoyée. Attends une minute avant d'en envoyer une autre."); return; }
-  } catch (e) {}
-  const btn = document.getElementById("qBtn");
-  btn.disabled = true; qSay("Envoi en cours…", true);
-  try {
-    const data = { name, whatsapp: wa, service, message, status: "new", createdAt: serverTimestamp() };
-    if (budget) data.budget = budget;
-    if (delay) data.delay = delay;
-    await addDoc(collection(db, "quotes"), data);
-    try { localStorage.setItem("mz_quote_t", String(Date.now())); } catch (e) {}
-    ["qBudget", "qDelay", "qText"].forEach(id => { document.getElementById(id).value = ""; });
-    qSay("Merci ! Ta demande est bien reçue. Tu recevras une réponse sur WhatsApp.", true);
-  } catch (e) {
-    qSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi directement sur WhatsApp.");
-  }
-  btn.disabled = false;
-});
-
-// Compteur de visiteurs : anonyme (identifiant aléatoire, aucune donnée personnelle).
-// Une personne est comptée une seule fois au total, et une fois par jour.
-(async () => {
-  let vid = "";
-  try {
-    if (localStorage.getItem("mz_admin")) return; // ne pas compter les visites de l'administrateur
-    vid = localStorage.getItem("mz_vid") || "";
-    if (!vid) {
-      vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-        : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
-      localStorage.setItem("mz_vid", vid);
-    }
-  } catch (e) { return; }
-  try {
-    if (!localStorage.getItem("mz_counted")) {
-      await setDoc(doc(db, "visitors", vid), { firstSeen: serverTimestamp() });
-      localStorage.setItem("mz_counted", "1");
-    }
-  } catch (e) { /* silencieux */ }
-  try {
-    const d = new Date(), p = n => String(n).padStart(2, "0");
-    const day = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-    if (localStorage.getItem("mz_day") !== day) {
-      await setDoc(doc(db, "visits", day + "_" + vid), { day, createdAt: serverTimestamp() });
-      localStorage.setItem("mz_day", day);
-    }
-  } catch (e) { /* silencieux */ }
-})();
-
-// Annonce affichée en haut de la page (publiée depuis l'administration)
-try {
-  const n = await getDoc(doc(db, "site", "news"));
-  if (n.exists()) {
-    const nd = n.data(), text = String(nd.text || "").trim(), nid = String(nd.id || "");
-    let seen = "";
-    try { seen = localStorage.getItem("mz_news") || ""; } catch (e) {}
-    if (text && nid !== seen) {
-      document.getElementById("newsText").textContent = " " + text;
-      document.getElementById("newsBar").classList.remove("hidden");
-      document.getElementById("newsClose").addEventListener("click", () => {
-        document.getElementById("newsBar").classList.add("hidden");
-        try { localStorage.setItem("mz_news", nid); } catch (e) {}
-      });
-    }
-  }
-} catch (e) { console.warn("Annonce non chargée", e); }
-
-// Inscription des membres (email + WhatsApp)
-const memberForm = document.getElementById("memberForm");
-const mMsg = document.getElementById("mMsg");
-function memberDone() {
-  memberForm.classList.add("hidden");
-  document.getElementById("mDone").classList.remove("hidden");
-}
-function memberSay(text, ok) { mMsg.textContent = text; mMsg.className = "mmsg " + (ok ? "ok" : "err"); }
-try { if (localStorage.getItem("mz_member")) memberDone(); } catch (e) {}
-// Identifiant Facebook (pseudo ou numéro) tiré d'un lien ou d'un nom, en minuscules sans caractères spéciaux
-function fbHandle(v) {
-  let s = String(v || "").trim();
-  if (/^(https?:\/\/|www\.|m\.|facebook\.com|fb\.com)/i.test(s)) {
-    try {
-      const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
-      s = u.pathname.replace(/\//g, "") === "profile.php"
-        ? (u.searchParams.get("id") || "")
-        : (u.pathname.split("/").filter(Boolean)[0] || "");
-    } catch (e) { s = ""; }
-  }
-  return s.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._-]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 100);
-}
-memberForm.addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const email = document.getElementById("mEmail").value.trim().toLowerCase();
-  const wa = normPhone(document.getElementById("mWa").value);
-  const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
-  if (name.length < 2 || name.length > 80) { memberSay("Entre ton nom et ton prénom."); return; }
-  const rawWa = document.getElementById("mWa").value.trim();
-  const fbRaw = document.getElementById("mFb").value.trim();
-  if (rawWa && !phoneOk(wa)) { memberSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
-  if (!rawWa && !fbRaw) { memberSay("Entre ton numéro WhatsApp ou ton compte Facebook (au moins un des deux)."); return; }
-  if (fbRaw && fbRaw.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  const fbId = fbHandle(fbRaw);
-  if (!wa && fbId.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  if (email && (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254)) { memberSay("Cette adresse email n'est pas valide. Corrige-la ou laisse la case vide."); return; }
-  if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
-  const btn = document.getElementById("mBtn");
-  btn.disabled = true; memberSay("Inscription en cours…", true);
-  try {
-    const data = { name, createdAt: serverTimestamp() };
-    if (wa) data.whatsapp = wa;
-    if (fbRaw) data.facebook = fbRaw.slice(0, 200);
-    if (email) data.email = email;
-    await setDoc(doc(db, "members", wa || ("fb_" + fbId)), data);
-    try { localStorage.setItem("mz_member", "1"); } catch (e) {}
-    memberDone();
-  } catch (e) {
-    memberSay(e.code === "permission-denied"
-      ? "Ce numéro ou ce compte Facebook est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
-      : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
-  }
-  btn.disabled = false;
-});
-</script>
-<script>
-/* Intro étoile : noir, clic, les deux autres étoiles apparaissent et s'illuminent jusqu'au blanc */
+// Intro handler
 (function () {
-  var intro = document.getElementById("intro");
+  const intro = document.getElementById("intro");
   if (!intro) return;
-  var started = false;
-  function finish() {
-    document.documentElement.classList.remove("introOn");
-    if (intro.parentNode) intro.parentNode.removeChild(intro);
-  }
   function start() {
-    if (started) return;
-    started = true;
     intro.classList.add("go");
-    setTimeout(function () { intro.classList.add("white"); }, 1900);
-    setTimeout(function () { intro.classList.add("out"); }, 3500);
-    setTimeout(finish, 4300);
+    setTimeout(() => intro.classList.add("white"), 1000);
+    setTimeout(() => {
+      document.documentElement.classList.remove("introOn");
+      if (intro.parentNode) intro.parentNode.removeChild(intro);
+    }, 1600);
   }
   document.getElementById("introStar").addEventListener("click", start);
-  document.getElementById("introStar").addEventListener("keydown", function (e) {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); }
-  });
   document.getElementById("introBtn").addEventListener("click", start);
 })();
 </script>
 </body>
-                                </html>
+</html>
