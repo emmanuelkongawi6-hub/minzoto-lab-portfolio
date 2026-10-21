@@ -170,6 +170,11 @@ textarea{min-height:75px}
       <textarea id="heroText" style="min-height:120px"></textarea>
       <label for="whatsapp">Numéro WhatsApp (écris-le comme d'habitude, ex. 081 234 5678)</label>
       <input id="whatsapp" inputmode="tel" placeholder="081 234 5678">
+      <label for="waApp">Application WhatsApp de ton numéro client (utilisée par tous les boutons WhatsApp de l'admin)</label>
+      <select id="waApp">
+        <option value="business">WhatsApp Business (compte client)</option>
+        <option value="normal">WhatsApp normal</option>
+      </select>
       <label for="footerTxt">Texte du bas de page</label>
       <input id="footerTxt">
       <button class="gold" onclick="saveTexts()" style="margin-top:16px">Enregistrer les textes</button>
@@ -520,7 +525,7 @@ $("memberList").addEventListener("click", async e => {
   const g = n => e.target.getAttribute && e.target.getAttribute(n);
   const wa = g("data-wa"), mail = g("data-mail"), fb = g("data-fb"), del = g("data-delmem");
   if (wa) {
-    window.open("https://wa.me/" + wa.replace(/\D/g,"") + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+    waOpen(wa, newsMessage());
   } else if (fb) {
     openMessenger(fb, newsMessage());
     say("memberMessage","Message copié : colle-le dans la conversation Messenger, puis envoie.", true);
@@ -544,19 +549,37 @@ window.copyEmails = async function () {
     say("memberMessage","Emails copiés : colle-les dans le champ « Cci » de ton mail.", true);
   } catch (e) { prompt("Copie cette liste d'emails :", list); }
 };
+/* ---------- WhatsApp : tous les boutons ouvrent l'application choisie (Business par défaut) ---------- */
+const WA_PKG = { business: "com.whatsapp.w4b", normal: "com.whatsapp" };
+function waAppChoice(){
+  try { const v = localStorage.getItem("waApp"); if (v === "normal" || v === "business") return v; } catch (e) {}
+  return "business";
+}
+function waOpen(number, text){
+  const n = String(number || "").replace(/\D/g, "");
+  const web = "https://wa.me/" + n + "?text=" + encodeURIComponent(text || "");
+  if (/Android/i.test(navigator.userAgent)) {
+    location.href = "intent://send/?" + (n ? "phone=" + n + "&" : "") + "text=" + encodeURIComponent(text || "") +
+      "#Intent;scheme=whatsapp;package=" + WA_PKG[waAppChoice()] + ";S.browser_fallback_url=" + encodeURIComponent(web) + ";end";
+  } else {
+    window.open(web, "_blank", "noopener");
+  }
+}
+$("waApp").value = waAppChoice();
+$("waApp").addEventListener("change", () => { try { localStorage.setItem("waApp", $("waApp").value); } catch (e) {} });
 /* ---------- Invitation à devenir membre (via WhatsApp) ---------- */
 const INVITE_LINK = SITE_URL + "#membre";
 const INVITE_DEFAULT = "Bonjour ! Rejoins MINZOTO Lab et deviens membre pour être prévenu(e) des nouveaux tarifs, des nouvelles offres et des nouveaux visuels. Inscris-toi ici : " + INVITE_LINK;
 $("inviteText").value = INVITE_DEFAULT;
 window.inviteWhatsApp = function (toNumber) {
   const text = $("inviteText").value.trim() || INVITE_DEFAULT;
-  let url = "https://wa.me/";
+  let num = "";
   if (toNumber) {
     const n = normPhone($("inviteNumber").value);
     if (!phoneOk(n)) { say("inviteMessage","Entre un numéro WhatsApp valide, par exemple 081 234 5678."); return; }
-    url += n;
+    num = n;
   }
-  window.open(url + "?text=" + encodeURIComponent(text), "_blank", "noopener");
+  waOpen(num, text);
   say("inviteMessage","WhatsApp s'ouvre avec ton invitation : appuie sur Envoyer.", true);
 };
 window.copyInviteLink = async function () {
@@ -713,7 +736,7 @@ window.notifyMembers = async function () {
 window.notifyWhatsApp = function () {
   if (!notifyWa.length) return;
   if (notifyWaIdx >= notifyWa.length) { notifyWaIdx = 0; refreshNotify(); return; }
-  window.open("https://wa.me/" + notifyWa[notifyWaIdx].n + "?text=" + encodeURIComponent(newsMessage()), "_blank", "noopener");
+  waOpen(notifyWa[notifyWaIdx].n, newsMessage());
   notifyWaIdx++;
   refreshNotify();
 };
@@ -781,7 +804,7 @@ $("quoteList").addEventListener("click", async e => {
   if (wa) {
     const q = find(wa); if (!q) return;
     const txt = "Bonjour " + q.name + ", c'est MINZOTO Lab. Merci pour ta demande de devis (" + q.service + "). ";
-    window.open("https://wa.me/" + String(q.whatsapp).replace(/\D/g,"") + "?text=" + encodeURIComponent(txt), "_blank", "noopener");
+    waOpen(q.whatsapp, txt);
   } else if (done) {
     const q = find(done); if (!q) return;
     const status = q.status === "new" ? "done" : "new";
