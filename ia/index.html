@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minzoto IA | MINZOTO Lab</title>
+<meta name="description" content="Minzoto, l'assistant IA de MINZOTO Lab : design graphique, communication visuelle, génération d'images et toutes tes questions.">
+<meta name="theme-color" content="#0b0b0d">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MINZOTO Lab">
+<meta property="og:title" content="Minzoto IA | MINZOTO Lab">
+<meta property="og:description" content="Pose tes questions, crée des images, améliore tes designs. L'assistant IA de MINZOTO Lab.">
+<meta property="og:url" content="https://minzotolab.github.io/ia/">
+<meta property="og:image" content="https://minzotolab.github.io/og-image.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Minzoto IA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg:#0b0b0d; --side:#101013; --panel:#16161a; --panel2:#1d1d22; --line:#26262c; --line2:#34343c;
+  --text:#f3f3f5; --mut:#9b9ba6; --dim:#6d6d78; --gold:#ffdd12; --gold2:#e7b928; --danger:#ff6b6b; --ok:#4ade80;
+  --r:16px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:16px;line-height:1.55;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hidden{display:none!important}
+.app{height:100%;display:flex;position:relative}
+
+/* ---------- barre latérale ---------- */
+.side{width:292px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;flex:none;z-index:30;transition:transform .28s cubic-bezier(.3,.7,.2,1)}
+.side-top{padding:calc(14px + var(--safe-t)) 14px 10px;display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.01em;font-size:18px}
+.brand img{width:34px;height:34px;border-radius:10px;display:block}
+.brand b{color:var(--gold);font-weight:800}
+.newchat{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--gold);color:#000;font-weight:700}
+.newchat:active{transform:scale(.98)}
+.side-label{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:10px 20px 6px}
+.hist{flex:1;overflow:auto;padding:0 10px 10px}
+.hist::-webkit-scrollbar{width:6px}.hist::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+.hitem{display:flex;align-items:center;gap:6px;border-radius:12px;padding:0 4px 0 12px}
+.hitem:hover,.hitem.on{background:var(--panel)}
+.hitem .t{flex:1;min-width:0;text-align:left;padding:10px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px;color:#dcdce2}
+.hitem.on .t{color:#fff}
+.hitem .del{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;color:var(--dim);opacity:0}
+.hitem:hover .del,.hitem.on .del{opacity:1}
+.hitem .del:hover{color:var(--danger);background:var(--panel2)}
+.hnote{padding:14px 12px;color:var(--dim);font-size:13.5px;line-height:1.5}
+.side-bot{border-top:1px solid var(--line);padding:12px 14px calc(12px + var(--safe-b));display:flex;flex-direction:column;gap:8px}
+.userbox{display:flex;align-items:center;gap:11px;padding:6px 4px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:800;color:var(--gold);overflow:hidden;flex:none;border:1px solid var(--line2)}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.uinfo{flex:1;min-width:0}
+.uinfo b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uinfo span{display:block;font-size:12.5px;color:var(--mut)}
+.sbtn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;color:#d6d6dc;font-size:14.5px;width:100%;text-align:left}
+.sbtn:hover{background:var(--panel)}
+.sbtn.gold{background:var(--panel2);color:var(--gold);font-weight:700}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:25;opacity:0;pointer-events:none;transition:opacity .25s}
+@media(max-width:860px){
+  .side{position:fixed;left:0;top:0;bottom:0;transform:translateX(-102%);width:min(86vw,320px);box-shadow:20px 0 60px rgba(0,0,0,.5)}
+  .app.open .side{transform:none}
+  .app.open .scrim{opacity:1;pointer-events:auto}
+}
+
+/* ---------- zone principale ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;position:relative;
+  background:radial-gradient(700px 360px at 50% -80px,rgba(255,221,18,.09),transparent 70%),var(--bg)}
+.top{display:flex;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) 12px 8px;min-height:60px}
+.iconbtn{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;color:#d9d9df}
+.iconbtn:hover{background:var(--panel)}
+.top .ttl{flex:1;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.top .ttl em{font-style:normal;color:var(--gold)}
+.quota{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;color:var(--mut);font-weight:600;white-space:nowrap}
+.quota svg{width:16px;height:16px;color:var(--gold)}
+.quota b{color:var(--text)}
+@media(min-width:861px){#menuBtn{display:none}}
+.scroll{flex:1;overflow:auto;scroll-behavior:smooth;padding:6px 0 18px}
+.scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}
+.col{max-width:780px;margin:0 auto;padding:0 16px}
+
+/* accueil */
+.welcome{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:10px 16px 24px}
+.orb{width:92px;height:92px;position:relative;margin-bottom:18px}
+.orb img{width:100%;height:100%;border-radius:26px;display:block;position:relative;z-index:1;box-shadow:0 10px 40px rgba(255,221,18,.22)}
+.orb::before{content:"";position:absolute;inset:-26px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,221,18,.35),transparent 72%);animation:breathe 4.2s ease-in-out infinite}
+.orb i{position:absolute;z-index:2;width:7px;height:7px;background:var(--gold);transform:rotate(45deg);border-radius:1px;animation:tw 2.6s ease-in-out infinite;box-shadow:0 0 10px var(--gold)}
+.orb i:nth-of-type(1){top:-8px;right:-4px}.orb i:nth-of-type(2){bottom:2px;left:-14px;animation-delay:.9s;width:5px;height:5px}.orb i:nth-of-type(3){top:22px;right:-22px;animation-delay:1.7s;width:4px;height:4px}
+@keyframes breathe{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes tw{0%,100%{opacity:.2;transform:rotate(45deg) scale(.6)}50%{opacity:1;transform:rotate(45deg) scale(1.2)}}
+.hello{font-size:clamp(28px,6vw,40px);font-weight:800;margin:0;line-height:1.15;letter-spacing:-.01em}
+.hello span{background:linear-gradient(90deg,#fff 0%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);max-width:520px;margin:12px 0 26px;font-size:15.5px}
+.sugg{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:640px}
+.sg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;display:flex;flex-direction:column;gap:9px;transition:border-color .2s,transform .15s,background .2s}
+.sg:hover{border-color:rgba(255,221,18,.5);background:var(--panel2)}
+.sg:active{transform:scale(.98)}
+.sg .ic{width:36px;height:36px;border-radius:11px;background:rgba(255,221,18,.1);color:var(--gold);display:grid;place-items:center}
+.sg b{font-size:14.5px;line-height:1.3}
+.sg span{font-size:12.5px;color:var(--mut);line-height:1.4}
+@media(max-width:420px){.sugg{gap:8px}.sg{padding:12px}.sg span{display:none}}
+
+/* messages */
+.msg{display:flex;gap:12px;padding:14px 0;animation:rise .3s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.u{justify-content:flex-end}
+.bub{max-width:86%;background:var(--panel2);border:1px solid var(--line);border-radius:20px 20px 6px 20px;padding:11px 15px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
+.bub .att{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.bub .att img{width:92px;height:92px;object-fit:cover;border-radius:12px;display:block}
+.av{width:32px;height:32px;border-radius:10px;flex:none;margin-top:2px}
+.av img{width:100%;height:100%;border-radius:10px;display:block}
+.body{flex:1;min-width:0}
+.txt{overflow-wrap:anywhere}
+.txt p{margin:0 0 .75em}.txt p:last-child{margin-bottom:0}
+.txt h1,.txt h2,.txt h3{margin:1.1em 0 .45em;line-height:1.3;font-size:1.08em}
+.txt h1{font-size:1.2em}
+.txt ul,.txt ol{margin:.3em 0 .8em;padding-left:1.35em}.txt li{margin:.22em 0}
+.txt a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.txt code{background:var(--panel2);padding:2px 6px;border-radius:6px;font-size:.9em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.txt pre{background:#0f0f12;border:1px solid var(--line);border-radius:14px;padding:0;margin:.6em 0 .9em;overflow:hidden}
+.txt pre .ph{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--panel);font-size:12px;color:var(--mut)}
+.txt pre .ph button{color:var(--mut);display:flex;gap:6px;align-items:center;font-size:12px}
+.txt pre .ph button:hover{color:var(--gold)}
+.txt pre code{display:block;padding:12px;background:none;overflow:auto;font-size:13.5px;line-height:1.5}
+.txt strong{color:#fff}
+.sw{display:inline-block;width:.9em;height:.9em;border-radius:4px;background:var(--c);vertical-align:-.1em;margin-right:.3em;border:1px solid rgba(255,255,255,.35)}
+.acts{display:flex;gap:2px;margin-top:6px;margin-left:-8px}
+.acts button{width:34px;height:34px;border-radius:9px;color:var(--dim);display:grid;place-items:center}
+.acts button:hover{background:var(--panel);color:var(--text)}
+.acts svg.i{width:18px;height:18px}
+.cursor{display:inline-block;width:8px;height:1.05em;background:var(--gold);vertical-align:-.15em;margin-left:2px;border-radius:2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.think{display:flex;gap:5px;padding:8px 0}
+.think i{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dot 1.2s ease-in-out infinite}
+.think i:nth-child(2){animation-delay:.18s}.think i:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,80%,100%{opacity:.25;transform:scale(.7)}40%{opacity:1;transform:scale(1.05)}}
+.err{color:#ffb4b4;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.3);border-radius:14px;padding:11px 14px;font-size:14.5px}
+
+/* image générée */
+.imgcard{width:min(100%,440px);border-radius:18px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.imgbox{position:relative;aspect-ratio:1/1;background:var(--panel2);overflow:hidden}
+.imgbox img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .6s}
+.imgbox img.ok{opacity:1}
+.imgbox .sk{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,221,18,.12) 50%,transparent 70%),var(--panel2);background-size:220% 100%;animation:sh 1.6s linear infinite;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut);font-size:14px;text-align:center;padding:16px}
+.imgbox .sk svg{width:34px;height:34px;color:var(--gold);animation:breathe 2s ease-in-out infinite}
+@keyframes sh{from{background-position:120% 0}to{background-position:-120% 0}}
+.imgbar{display:flex;gap:8px;padding:10px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;background:var(--panel2);border:1px solid var(--line2);font-size:13.5px;font-weight:600}
+.pill:hover{border-color:var(--gold);color:var(--gold)}
+.pill svg.i{width:17px;height:17px}
+
+/* zone de saisie */
+.dock{padding:6px 12px calc(10px + var(--safe-b));background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+.comp{max-width:780px;margin:0 auto;background:var(--panel);border:1px solid var(--line2);border-radius:26px;padding:8px 8px 8px 8px;transition:border-color .2s,box-shadow .2s}
+.comp:focus-within{border-color:rgba(255,221,18,.55);box-shadow:0 0 0 4px rgba(255,221,18,.07)}
+.comp.imgmode{border-color:rgba(255,221,18,.6)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:4px 6px 6px}
+.chip{position:relative}
+.chip img{width:62px;height:62px;border-radius:12px;object-fit:cover;display:block;border:1px solid var(--line2)}
+.chip button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center}
+.chip button svg{width:12px;height:12px;stroke-width:3}
+.modebar{display:flex;align-items:center;gap:8px;padding:4px 10px 2px;font-size:13px;color:var(--gold);font-weight:600}
+textarea#inp{width:100%;background:none;border:0;outline:0;color:var(--text);font:inherit;resize:none;padding:10px 12px;max-height:170px;min-height:24px;display:block;line-height:1.5}
+textarea#inp::placeholder{color:var(--dim)}
+.crow{display:flex;align-items:center;gap:4px;padding:0 2px}
+.crow .sp{flex:1}
+.cb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#cfcfd6;transition:background .15s,color .15s}
+.cb:hover{background:var(--panel2);color:#fff}
+.cb.tog{width:auto;padding:0 14px 0 11px;border-radius:999px;gap:7px;display:flex;align-items:center;font-size:14px;font-weight:600;border:1px solid var(--line2);height:40px}
+.cb.tog.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.cb.rec{background:var(--danger);color:#fff;animation:pulse 1.2s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,107,.55)}100%{box-shadow:0 0 0 16px rgba(255,107,107,0)}}
+.send{background:var(--gold);color:#000}
+.send:hover{background:#ffe94d;color:#000}
+.send:disabled{background:var(--panel2);color:var(--dim);cursor:default}
+.send.stop{background:#fff}
+.foot{text-align:center;font-size:11.5px;color:var(--dim);margin-top:8px;padding:0 10px}
+
+/* fenêtres */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.card{background:var(--panel);border:1px solid var(--line2);border-radius:24px;padding:24px 22px;width:100%;max-width:400px;max-height:92vh;overflow:auto;position:relative;animation:rise .25s ease both}
+.card h3{margin:0 0 6px;font-size:21px}
+.card p{color:var(--mut);font-size:14.5px;margin:0 0 16px}
+.card .x{position:absolute;top:12px;right:12px}
+.gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:13px;border-radius:14px;background:#fff;color:#1f1f1f;font-weight:700;font-size:15.5px}
+.gbtn svg{width:22px;height:22px}
+.or{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:13px;margin:16px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line2)}
+.field{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:14px;color:var(--text);font:inherit;padding:13px 14px;outline:0;margin-bottom:10px}
+.field:focus{border-color:var(--gold)}
+.pbtn{width:100%;padding:13px;border-radius:14px;background:var(--gold);color:#000;font-weight:800}
+.pbtn:disabled{opacity:.6}
+.ghost{width:100%;padding:12px;border-radius:14px;color:var(--mut);margin-top:6px;font-size:14.5px}
+.ghost:hover{color:var(--text)}
+.note{font-size:13px;margin-top:10px;min-height:18px;color:var(--danger)}
+.note.ok{color:var(--ok)}
+.toast{position:fixed;left:50%;bottom:calc(110px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#fff;color:#000;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5 5 0 01-7.1-7.1l8.6-8.6a3.4 3.4 0 014.8 4.8l-8.6 8.6a1.8 1.8 0 01-2.5-2.5l7.9-7.9"/></symbol>
+    <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5.5-5.5 4 4 2.5-2.5L20 19"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16v4M17 18h4"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></symbol>
+    <symbol id="i-spk" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path d="M16.5 9a4 4 0 010 6M19 6.5a7.5 7.5 0 010 11"/></symbol>
+    <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+    <symbol id="i-dev" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+    <symbol id="i-pal" viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c1.3 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 004-4c0-4.4-4-7.8-9-7.8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7.2" r="1"/><circle cx="15" cy="7.8" r="1"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 5v5h-5M19.5 10A8 8 0 105 15"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="side-top">
+      <div class="brand"><img src="/icons/icon-192.png" alt="" width="34" height="34"><span>Minzoto <b>IA</b></span></div>
+      <button class="newchat" id="newChat"><svg class="i"><use href="#i-plus"/></svg>Nouvelle discussion</button>
+    </div>
+    <div class="side-label">Discussions récentes</div>
+    <div class="hist" id="hist"></div>
+    <div class="side-bot">
+      <div class="userbox hidden" id="userBox">
+        <div class="avatar" id="uAvatar"></div>
+        <div class="uinfo"><b id="uName"></b><span id="uSub"></span></div>
+      </div>
+      <button class="sbtn gold" id="loginBtn"><svg class="i"><use href="#i-out"/></svg>Se connecter</button>
+      <button class="sbtn hidden" id="installBtn"><svg class="i"><use href="#i-dev"/></svg>Installer l'application</button>
+      <button class="sbtn hidden" id="logoutBtn"><svg class="i"><use href="#i-out"/></svg>Se déconnecter</button>
+      <button class="sbtn" id="siteBtn"><svg class="i"><use href="#i-spark"/></svg>Site MINZOTO Lab</button>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="top">
+      <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <div class="ttl" id="ttl">Minzoto <em>IA</em></div>
+      <div class="quota" id="quota" title="Images gratuites restantes aujourd'hui"><svg class="i"><use href="#i-img"/></svg><span><b id="qLeft">3</b>/3</span></div>
+    </div>
+    <div class="scroll" id="scroll"><div class="col" id="col"></div></div>
+    <div class="dock">
+      <div class="comp" id="comp">
+        <div class="chips hidden" id="chips"></div>
+        <div class="modebar hidden" id="modebar"><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>Mode image : décris l'image à créer</div>
+        <textarea id="inp" rows="1" placeholder="Pose une question à Minzoto…" enterkeyhint="send"></textarea>
+        <div class="crow">
+          <button class="cb" id="attBtn" aria-label="Joindre une image"><svg class="i"><use href="#i-clip"/></svg></button>
+          <button class="cb tog" id="imgBtn" aria-pressed="false"><svg class="i"><use href="#i-spark"/></svg>Image</button>
+          <span class="sp"></span>
+          <button class="cb" id="micBtn" aria-label="Dicter avec la voix"><svg class="i"><use href="#i-mic"/></svg></button>
+          <button class="cb send" id="sendBtn" aria-label="Envoyer" disabled><svg class="i" style="stroke-width:2.4"><use href="#i-up"/></svg></button>
+        </div>
+      </div>
+      <div class="foot">Minzoto peut se tromper : vérifie les informations importantes.</div>
+      <input type="file" id="file" accept="image/*" multiple class="hidden">
+    </div>
+  </main>
+</div>
+
+<div class="modal hidden" id="loginModal" role="dialog" aria-modal="true">
+  <div class="card">
+    <button class="iconbtn x" id="loginClose" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button>
+    <h3>Connecte-toi</h3>
+    <p id="loginWhy">Retrouve tes anciennes discussions et crée jusqu'à 3 images gratuites par jour.</p>
+    <button class="gbtn" id="googleBtn">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="or">ou avec ton numéro</div>
+    <div id="phStep1">
+      <input class="field" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="081 234 5678">
+      <button class="pbtn" id="phoneSend">Recevoir le code par SMS</button>
+    </div>
+    <div id="phStep2" class="hidden">
+      <input class="field" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Code à 6 chiffres">
+      <button class="pbtn" id="codeOk">Valider</button>
+    </div>
+    <div id="recaptcha"></div>
+    <div class="note" id="loginNote" role="status"></div>
+    <button class="ghost" id="guestBtn">Continuer sans compte</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+  signOut, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, orderBy, limit, runTransaction, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+/* ================= RÉGLAGES (tu peux les modifier plus tard) ================= */
+const CONFIG = {
+  NAME: "Minzoto",
+  DAILY_IMAGES: 3,                                  // images gratuites par jour et par personne connectée
+  WHATSAPP: "243835263914",
+  SITE: "https://minzotolab.github.io/",
+  // Modèles Gemini essayés dans l'ordre : le premier qui répond est gardé
+  MODELS: ["gemini-3.5-flash", "gemini-3-flash", "gemini-2.5-flash", "gemini-flash-latest"],
+  // Service gratuit de génération d'images (sans clé). Si besoin, change seulement cette ligne.
+  IMAGE_URL: (prompt, seed) => "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
+    "?width=1024&height=1024&model=flux&nologo=true&enhance=false&seed=" + seed + "&referrer=minzotolab.github.io",
+  LANG_VOICE: "fr-FR"
+};
+const DEBUG = /[?&]debug=1/.test(location.search);
+
+const fbApp = initializeApp({
+  apiKey: "AIzaSyDLruZVIQKBQQS6fKW2ZNnCZReJEO5x04k",
+  authDomain: "minzoto-lab.firebaseapp.com",
+  projectId: "minzoto-lab",
+  storageBucket: "minzoto-lab.firebasestorage.app",
+  messagingSenderId: "591899158602",
+  appId: "1:591899158602:web:01677073ff278ab21e9eb3"
+});
+const auth = getAuth(fbApp);
+auth.languageCode = "fr";
+const db = getFirestore(fbApp);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ico = n => '<svg class="i"><use href="#i-' + n + '"/></svg>';
+function toast(t){ const e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 2600); }
+function dayKey(){ const d = new Date(), p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+function uid8(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* ---------- numéro de téléphone saisi comme d'habitude (RDC par défaut) ---------- */
+function normPhone(raw){
+  const s = String(raw || "").trim(), d = s.replace(/\D/g, "");
+  if (!d) return "";
+  if (s.charAt(0) === "+") return d;
+  if (d.slice(0, 2) === "00") return d.slice(2);
+  if (d.charAt(0) === "0") return "243" + d.slice(1);
+  if (d.length === 9) return "243" + d;
+  return d;
+}
+
+/* ================= État ================= */
+let user = null;
+let chats = [];                 // liste (id, title, updatedAt)
+let cur = null;                 // discussion ouverte { id, title, messages:[{r,t,u,p}] }
+let busy = false, abortFlag = false;
+let attach = [];                // images jointes { mime, data, url }
+let imageMode = false;
+let imagesLeft = CONFIG.DAILY_IMAGES;
+let aiMod = null, aiInst = null, modelName = "", modelObj = null, modelUser = "";
+
+/* ================= Stockage : Firestore (connecté) ou navigateur (invité) ================= */
+const LS = "mz_ia_chats";
+const store = {
+  async list(){
+    if (user) {
+      try {
+        const s = await getDocs(query(collection(db, "users", user.uid, "chats"), orderBy("updatedAt", "desc"), limit(40)));
+        return s.docs.map(d => ({ id: d.id, title: d.data().title || "Discussion", updatedAt: d.data().updatedAt }));
+      } catch (e) { if (DEBUG) console.error(e); return []; }
+    }
+    try { return JSON.parse(localStorage.getItem(LS) || "[]").map(c => ({ id: c.id, title: c.title })); } catch (e) { return []; }
+  },
+  async get(id){
+    if (user) { const s = await getDoc(doc(db, "users", user.uid, "chats", id)); return s.exists() ? { id, ...s.data() } : null; }
+    try { return JSON.parse(localStorage.getItem(LS) || "[]").find(c => c.id === id) || null; } catch (e) { return null; }
+  },
+  async save(c){
+    const clean = { title: c.title, messages: c.messages.map(m => { const o = { r: m.r, t: String(m.t || "").slice(0, 8000) }; if (m.u) o.u = m.u; if (m.p) o.p = m.p; return o; }) };
+    if (user) { try { await setDoc(doc(db, "users", user.uid, "chats", c.id), { ...clean, updatedAt: serverTimestamp() }); } catch (e) { if (DEBUG) console.error(e); } return; }
+    try {
+      const all = JSON.parse(localStorage.getItem(LS) || "[]").filter(x => x.id !== c.id);
+      all.unshift({ id: c.id, ...clean }); localStorage.setItem(LS, JSON.stringify(all.slice(0, 20)));
+    } catch (e) {}
+  },
+  async remove(id){
+    if (user) { try { await deleteDoc(doc(db, "users", user.uid, "chats", id)); } catch (e) {} return; }
+    try { localStorage.setItem(LS, JSON.stringify(JSON.parse(localStorage.getItem(LS) || "[]").filter(x => x.id !== id))); } catch (e) {}
+  }
+};
+
+/* ================= Rendu : texte (mini Markdown sûr) ================= */
+function md(src){
+  const blocks = [];
+  let s = String(src).replace(/```([a-zA-Z0-9+#_-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    blocks.push('<pre><div class="ph"><span>' + esc(lang || "code") + '</span><button data-copycode>' + ico("copy") + 'Copier</button></div><code>' + esc(code.replace(/\n$/, "")) + '</code></pre>');
+    return "\u0000" + (blocks.length - 1) + "\u0000";
+  });
+  s = esc(s);
+  const inline = t => t
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, "$1<em>$2</em>")
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>')
+    .replace(/#([0-9a-fA-F]{6})\b(?![^<]*>)/g, '<span class="sw" style="--c:#$1"></span>#$1');
+  const out = []; let list = null;
+  const close = () => { if (list) { out.push("</" + list + ">"); list = null; } };
+  s.split("\n").forEach(line => {
+    let m;
+    if (/^\u0000\d+\u0000$/.test(line.trim())) { close(); out.push(line.trim()); }
+    else if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) { if (list !== "ul") { close(); out.push("<ul>"); list = "ul"; } out.push("<li>" + inline(m[1]) + "</li>"); }
+    else if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { if (list !== "ol") { close(); out.push("<ol>"); list = "ol"; } out.push("<li>" + inline(m[1]) + "</li>"); }
+    else if ((m = line.match(/^(#{1,4})\s+(.*)$/))) { close(); out.push("<h3>" + inline(m[2]) + "</h3>"); }
+    else if (!line.trim()) { close(); out.push(""); }
+    else { close(); out.push("<p>" + inline(line) + "</p>"); }
+  });
+  close();
+  return out.join("\n").replace(/\u0000(\d+)\u0000/g, (m, i) => blocks[+i]);
+}
+
+/* ================= Rendu : discussion ================= */
+const col = $("col"), scroller = $("scroll");
+function scrollDown(force){
+  const near = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 160;
+  if (force || near) scroller.scrollTop = scroller.scrollHeight;
+}
+function firstName(){ const n = String((user && user.displayName) || "").trim().split(/\s+/)[0]; return n || ""; }
+function renderWelcome(){
+  const n = firstName();
+  col.innerHTML = '<div class="welcome">' +
+    '<div class="orb"><img src="/icons/icon-512.png" alt=""><i></i><i></i><i></i></div>' +
+    '<h1 class="hello"><span>Bonjour' + (n ? " " + esc(n) : "") + '</span></h1>' +
+    '<p class="sub">Je suis Minzoto, l\'assistant IA de MINZOTO Lab. Design graphique, communication visuelle, création d\'images, ou n\'importe quelle question.</p>' +
+    '<div class="sugg">' +
+    sg("pal", "Palette de couleurs", "Pour une marque ou une affiche", "Propose-moi une palette de couleurs professionnelle pour la marque d'un salon de coiffure haut de gamme, avec les codes HEX et les usages.") +
+    sg("pen", "Idée de logo", "Concept, style et typographie", "Donne-moi 3 concepts de logo pour une boutique de vêtements urbains, avec le style, les couleurs et la typographie conseillés.") +
+    sg("eye", "Critique mon design", "Envoie une image, j'analyse", "__attach__") +
+    sg("spark", "Créer une image", "3 images gratuites par jour", "__image__") +
+    '</div></div>';
+}
+function sg(icon, t, s, prompt){ return '<button class="sg" data-prompt="' + esc(prompt) + '"><span class="ic">' + ico(icon) + '</span><b>' + esc(t) + '</b><span>' + esc(s) + '</span></button>'; }
+
+function msgHTML(m, i){
+  if (m.r === "u") {
+    const att = m.a && m.a.length ? '<div class="att">' + m.a.map(a => '<img src="' + a + '" alt="">').join("") + '</div>' : "";
+    return '<div class="msg u" data-i="' + i + '"><div class="bub">' + att + esc(m.t || "") + '</div></div>';
+  }
+  const av = '<div class="av"><img src="/icons/icon-192.png" alt=""></div>';
+  if (m.u) {
+    return '<div class="msg" data-i="' + i + '">' + av + '<div class="body"><div class="imgcard"><div class="imgbox" data-url="' + esc(m.u) + '"><div class="sk">' + ico("img") + '<span>Création de ton image…<br><small>Environ 15 à 40 secondes</small></span></div></div>' +
+      '<div class="imgbar"><button class="pill" data-dl>' + ico("dl") + 'Télécharger</button><button class="pill" data-redo data-p="' + esc(m.p || "") + '">' + ico("redo") + 'Nouvelle version</button></div></div>' +
+      (m.t ? '<div class="txt" style="margin-top:10px">' + md(m.t) + '</div>' : "") + '</div></div>';
+  }
+  return '<div class="msg" data-i="' + i + '">' + av + '<div class="body"><div class="txt">' + (m.err ? '<div class="err">' + esc(m.t) + '</div>' : md(m.t || "")) + '</div>' +
+    '<div class="acts"><button data-copy aria-label="Copier">' + ico("copy") + '</button><button data-speak aria-label="Écouter">' + ico("spk") + '</button></div></div></div>';
+}
+function renderChat(){
+  if (!cur || !cur.messages.length) { renderWelcome(); return; }
+  col.innerHTML = cur.messages.map(msgHTML).join("");
+  col.querySelectorAll(".imgbox[data-url]").forEach(loadImg);
+  scrollDown(true);
+}
+function loadImg(box, tries){
+  tries = tries || 0;
+  const url = box.getAttribute("data-url"); if (!url || box.querySelector("img.ok")) return;
+  const im = new Image();
+  im.onload = () => { box.innerHTML = ""; im.className = "ok"; im.alt = "Image créée par Minzoto"; box.appendChild(im); box.dispatchEvent(new CustomEvent("imgok", { bubbles: true })); };
+  im.onerror = () => {
+    if (tries < 2) { setTimeout(() => loadImg(box, tries + 1), 4000 + tries * 6000); }
+    else box.innerHTML = '<div class="sk" style="animation:none">' + ico("img") + '<span>L\'image n\'a pas pu être chargée.<br>Touche « Nouvelle version » pour réessayer.</span></div>';
+  };
+  im.src = url;
+}
+
+/* ================= Barre latérale ================= */
+function renderHist(){
+  const h = $("hist");
+  if (!chats.length) { h.innerHTML = '<div class="hnote">' + (user ? "Tes discussions apparaîtront ici." : "Connecte-toi pour retrouver tes discussions sur tous tes appareils.") + '</div>'; return; }
+  h.innerHTML = chats.map(c => '<div class="hitem' + (cur && cur.id === c.id ? " on" : "") + '" data-id="' + esc(c.id) + '"><button class="t" data-open>' + esc(c.title) + '</button><button class="del" data-del aria-label="Supprimer">' + ico("trash") + '</button></div>').join("");
+}
+function renderUser(){
+  const li = !!user;
+  $("userBox").classList.toggle("hidden", !li);
+  $("logoutBtn").classList.toggle("hidden", !li);
+  $("loginBtn").classList.toggle("hidden", li);
+  if (li) {
+    const nm = user.displayName || user.phoneNumber || "Mon compte";
+    $("uName").textContent = nm;
+    $("uSub").textContent = user.email || user.phoneNumber || "Connecté";
+    $("uAvatar").innerHTML = user.photoURL ? '<img src="' + esc(user.photoURL) + '" alt="" referrerpolicy="no-referrer">' : esc(nm.trim().charAt(0).toUpperCase());
+  }
+}
+const openSide = v => $("app").classList.toggle("open", v);
+$("menuBtn").onclick = () => openSide(true);
+$("scrim").onclick = () => openSide(false);
+$("siteBtn").onclick = () => { location.href = CONFIG.SITE; };
+$("newChat").onclick = () => { if (busy) return; newChat(); openSide(false); };
+$("hist").addEventListener("click", async e => {
+  const it = e.target.closest(".hitem"); if (!it || busy) return;
+  const id = it.getAttribute("data-id");
+  if (e.target.closest("[data-del]")) {
+    if (!confirm("Supprimer cette discussion ?")) return;
+    await store.remove(id); chats = chats.filter(c => c.id !== id);
+    if (cur && cur.id === id) newChat(); else renderHist();
+    return;
+  }
+  const c = await store.get(id); if (!c) return;
+  cur = { id, title: c.title, messages: c.messages || [] };
+  $("ttl").innerHTML = esc(cur.title);
+  renderChat(); renderHist(); openSide(false);
+});
+function newChat(){
+  cur = { id: uid8(), title: "", messages: [] };
+  attach = []; renderChips(); setImageMode(false);
+  $("ttl").innerHTML = "Minzoto <em>IA</em>";
+  renderWelcome(); renderHist(); $("inp").focus();
+}
+
+/* ================= Zone de saisie ================= */
+const inp = $("inp");
+function fit(){ inp.style.height = "auto"; inp.style.height = Math.min(inp.scrollHeight, 170) + "px"; updSend(); }
+function updSend(){ $("sendBtn").disabled = busy ? false : !(inp.value.trim() || attach.length); }
+inp.addEventListener("input", fit);
+inp.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing && window.matchMedia("(hover:hover)").matches) { e.preventDefault(); send(); }
+});
+$("sendBtn").onclick = () => { if (busy) { abortFlag = true; return; } send(); };
+function setBusy(v){
+  busy = v;
+  const b = $("sendBtn"); b.classList.toggle("stop", v);
+  b.innerHTML = v ? '<svg class="i"><use href="#i-stop"/></svg>' : '<svg class="i" style="stroke-width:2.4"><use href="#i-up"/></svg>';
+  updSend();
+}
+function setImageMode(v){
+  imageMode = v;
+  $("imgBtn").classList.toggle("on", v); $("imgBtn").setAttribute("aria-pressed", v);
+  $("comp").classList.toggle("imgmode", v); $("modebar").classList.toggle("hidden", !v);
+  inp.placeholder = v ? "Ex. Une affiche d'anniversaire dorée et élégante…" : "Pose une question à Minzoto…";
+}
+$("imgBtn").onclick = () => {
+  if (!imageMode && !user) { openLogin("Connecte-toi pour créer jusqu'à " + CONFIG.DAILY_IMAGES + " images gratuites par jour."); return; }
+  setImageMode(!imageMode); inp.focus();
+};
+
+/* ----- images jointes ----- */
+$("attBtn").onclick = () => $("file").click();
+$("file").addEventListener("change", async e => {
+  const files = Array.from(e.target.files || []).slice(0, 4 - attach.length); e.target.value = "";
+  for (const f of files) {
+    try { attach.push(await shrink(f)); } catch (err) { toast("Image non utilisable"); }
+  }
+  renderChips();
+});
+function shrink(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      URL.revokeObjectURL(url);
+      const r = Math.min(1, 1280 / Math.max(im.width, im.height));
+      const c = document.createElement("canvas"); c.width = Math.round(im.width * r); c.height = Math.round(im.height * r);
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      const out = c.toDataURL("image/jpeg", 0.85);
+      res({ mime: "image/jpeg", data: out.split(",")[1], url: out });
+    };
+    im.onerror = () => rej(new Error("image"));
+    im.src = url;
+  });
+}
+function renderChips(){
+  const c = $("chips"); c.classList.toggle("hidden", !attach.length);
+  c.innerHTML = attach.map((a, i) => '<div class="chip"><img src="' + a.url + '" alt=""><button data-rm="' + i + '" aria-label="Retirer">' + ico("x") + '</button></div>').join("");
+  updSend();
+}
+$("chips").addEventListener("click", e => { const b = e.target.closest("[data-rm]"); if (b) { attach.splice(+b.getAttribute("data-rm"), 1); renderChips(); } });
+document.addEventListener("paste", e => {
+  const fs = Array.from((e.clipboardData && e.clipboardData.files) || []).filter(f => f.type.indexOf("image/") === 0);
+  if (fs.length) { fs.slice(0, 4 - attach.length).forEach(async f => { try { attach.push(await shrink(f)); renderChips(); } catch (x) {} }); }
+});
+
+/* ----- dictée vocale ----- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recOn = false, recBase = "";
+$("micBtn").onclick = () => {
+  if (!SR) { toast("La dictée vocale n'est pas disponible sur ce navigateur. Essaie avec Chrome."); return; }
+  if (recOn) { stopRec(); return; }
+  rec = new SR(); rec.lang = CONFIG.LANG_VOICE; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  recBase = inp.value ? inp.value.replace(/\s+$/, "") + " " : "";
+  let finalT = "";
+  rec.onresult = ev => {
+    let interim = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const t = ev.results[i][0].transcript;
+      if (ev.results[i].isFinal) finalT += t + " "; else interim += t;
+    }
+    inp.value = recBase + finalT + interim; fit();
+  };
+  rec.onerror = ev => {
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed") toast("Autorise le micro pour dicter ton message.");
+    else if (ev.error === "no-speech") toast("Je n'ai rien entendu. Réessaie.");
+    else if (ev.error !== "aborted") toast("Dictée impossible (" + ev.error + ")");
+    stopRec(true);
+  };
+  rec.onend = () => { if (recOn) { recBase = inp.value.replace(/\s+$/, "") + " "; finalT = ""; try { rec.start(); } catch (e) { stopRec(true); } } };
+  try { rec.start(); recOn = true; $("micBtn").classList.add("rec"); toast("Je t'écoute… touche le micro pour arrêter"); } catch (e) { toast("Micro indisponible"); }
+};
+function stopRec(silent){
+  recOn = false; $("micBtn").classList.remove("rec");
+  try { rec && rec.stop(); } catch (e) {}
+  inp.value = inp.value.trim(); fit();
+}
+
+/* ----- suggestions, copier, écouter ----- */
+col.addEventListener("click", e => {
+  const sgb = e.target.closest(".sg");
+  if (sgb) {
+    const p = sgb.getAttribute("data-prompt");
+    if (p === "__attach__") { $("file").click(); inp.value = "Analyse ce design : points forts, points faibles et améliorations concrètes."; fit(); }
+    else if (p === "__image__") { $("imgBtn").click(); }
+    else { inp.value = p; fit(); send(); }
+    return;
+  }
+  const msg = e.target.closest(".msg");
+  if (e.target.closest("[data-copycode]")) {
+    const code = e.target.closest("pre").querySelector("code").textContent;
+    navigator.clipboard.writeText(code).then(() => toast("Code copié"), () => toast("Copie impossible")); return;
+  }
+  if (e.target.closest("[data-copy]") && msg) {
+    const m = cur.messages[+msg.getAttribute("data-i")]; navigator.clipboard.writeText(m.t || "").then(() => toast("Texte copié"), () => toast("Copie impossible")); return;
+  }
+  if (e.target.closest("[data-speak]") && msg) {
+    const m = cur.messages[+msg.getAttribute("data-i")];
+    if (!("speechSynthesis" in window)) { toast("Lecture vocale indisponible"); return; }
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+    const u = new SpeechSynthesisUtterance(String(m.t || "").replace(/[*#`_>\[\]()]/g, "").replace(/https?:\/\/\S+/g, "")); u.lang = CONFIG.LANG_VOICE; speechSynthesis.speak(u); return;
+  }
+  if (e.target.closest("[data-dl]") && msg) {
+    const m = cur.messages[+msg.getAttribute("data-i")];
+    downloadImage(m.u, "minzoto-" + Date.now()); return;
+  }
+  const rd = e.target.closest("[data-redo]");
+  if (rd) { if (busy) return; makeImage(rd.getAttribute("data-p"), [], true); }
+});
+async function downloadImage(url, name){
+  try {
+    const r = await fetch(url, { mode: "cors" }); const b = await r.blob(); const a = document.createElement("a");
+    a.href = URL.createObjectURL(b); a.download = name + ".jpg"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (e) { window.open(url, "_blank", "noopener"); toast("Appuie longtemps sur l'image pour l'enregistrer"); }
+}
+
+/* ================= Intelligence artificielle (Gemini via Firebase AI Logic) ================= */
+function systemPrompt(){
+  const n = firstName();
+  return "Tu es Minzoto, l'assistant IA de MINZOTO Lab, un studio créatif en RDC (logos, affiches, portraits numériques, retouche photo, marques de vêtements, identités visuelles). " +
+    "Réponds dans la langue de l'utilisateur (français par défaut). Donne des réponses concrètes, exactes et bien structurées, sans remplissage ni phrases creuses. Si tu n'es pas sûr, dis-le ; n'invente jamais de faits, de chiffres, de sources, de prix ni de contacts. " +
+    "Tu réponds à toutes les questions générales (savoir, école, travail, technologie, business, santé générale, vie pratique, rédaction, calcul, code…). Pour la santé, le droit et la finance, informe clairement et recommande un professionnel pour les décisions importantes. Refuse poliment ce qui est dangereux ou illégal. " +
+    "Ta spécialité est le design graphique et toute la communication visuelle : identité de marque, logotypes, typographie, théorie des couleurs (donne les codes HEX), composition, hiérarchie visuelle, affiches, flyers, réseaux sociaux, packaging, mode, impression (CMJN, fonds perdus, résolution), et les outils (Photoshop, Illustrator, Canva, Figma, CorelDRAW). Dans ce domaine, sois précis comme un directeur artistique : donne des valeurs, des exemples et des étapes applicables. " +
+    "Quand l'utilisateur envoie une image, analyse-la réellement : ce que tu vois, les forces, les faiblesses, puis des améliorations concrètes. " +
+    "Si on te demande de créer ou dessiner une image, explique qu'il suffit de toucher le bouton « Image » (3 images gratuites par jour pour les personnes connectées) ou d'écrire « génère une image de… ». " +
+    "Pour un vrai projet ou un devis de design, invite à contacter MINZOTO Lab sur WhatsApp (+" + CONFIG.WHATSAPP + ") ou via le formulaire de devis du site " + CONFIG.SITE + ". " +
+    "Style : chaleureux, professionnel, clair ; utilise des listes courtes et du gras seulement quand cela aide. " + (n ? "L'utilisateur s'appelle " + n + "." : "");
+}
+async function getModel(force){
+  if (!aiMod) aiMod = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-ai.js");
+  if (!aiInst) aiInst = aiMod.getAI(fbApp, { backend: new aiMod.GoogleAIBackend() });
+  const names = modelName && !force ? [modelName] : CONFIG.MODELS;
+  return { names };
+}
+function makeModel(name){
+  return aiMod.getGenerativeModel(aiInst, { model: name, systemInstruction: systemPrompt(), generationConfig: { temperature: 0.7 } });
+}
+function toContents(msgs, withAttach){
+  const out = [];
+  msgs.forEach((m, idx) => {
+    if (m.err) return;
+    const role = m.r === "u" ? "user" : "model";
+    const parts = [];
+    let t = m.t || "";
+    if (m.u) t = "[Image créée pour : " + (m.p || "") + "]" + (t ? "\n" + t : "");
+    if (m.r === "u" && withAttach && idx === msgs.length - 1 && m.raw) m.raw.forEach(a => parts.push({ inlineData: { mimeType: a.mime, data: a.data } }));
+    parts.push({ text: t || "(image)" });
+    if (out.length && out[out.length - 1].role === role) out[out.length - 1].parts.push(...parts); else out.push({ role, parts });
+  });
+  while (out.length && out[0].role !== "user") out.shift();
+  return out;
+}
+function friendly(e){
+  const m = String((e && (e.message || e.code)) || e || "");
+  if (DEBUG) console.error(e);
+  if (/quota|429|resource.?exhausted|rate/i.test(m)) return "Je suis très sollicité en ce moment. Réessaie dans une minute.";
+  if (/network|fetch|failed to fetch|offline|ERR_/i.test(m)) return "Pas de connexion internet. Vérifie ton réseau puis réessaie.";
+  if (/safety|blocked|prohibited/i.test(m)) return "Je ne peux pas répondre à cette demande. Essaie de la reformuler.";
+  if (/api.?not.?enabled|has not been used|disabled|permission|403|app.?check|API key/i.test(m)) return "Le service d'intelligence artificielle n'est pas encore activé. Réessaie plus tard ou contacte MINZOTO Lab." + (DEBUG ? " [" + m.slice(0, 200) + "]" : "");
+  return "Une erreur est survenue. Réessaie dans un instant." + (DEBUG ? " [" + m.slice(0, 200) + "]" : "");
+}
+async function streamAnswer(contents, el){
+  const { names } = await getModel();
+  let lastErr = null;
+  for (const name of names) {
+    try {
+      const mod = makeModel(name);
+      const res = await mod.generateContentStream({ contents });
+      let acc = "";
+      for await (const ch of res.stream) {
+        if (abortFlag) break;
+        acc += ch.text(); modelName = name;
+        el.innerHTML = md(acc) + '<span class="cursor"></span>'; scrollDown();
+      }
+      modelName = name;
+      return acc;
+    } catch (e) {
+      lastErr = e;
+      if (!/not.?found|404|not supported|unsupported|invalid model/i.test(String(e && e.message))) throw e;
+    }
+  }
+  throw lastErr || new Error("no model");
+}
+async function oneShot(contents){
+  const { names } = await getModel();
+  let lastErr = null;
+  for (const name of names) {
+    try { const r = await makeModel(name).generateContent({ contents }); modelName = name; return r.response.text(); }
+    catch (e) { lastErr = e; if (!/not.?found|404|not supported|unsupported|invalid model/i.test(String(e && e.message))) throw e; }
+  }
+  throw lastErr || new Error("no model");
+}
+
+/* ================= Envoi d'un message ================= */
+const IMG_INTENT = /^\s*(g[ée]n[èe]re|cr[ée]+|dessine|fais|r[ée]alise|produis|imagine|generate|create|draw|make)\b[^.?!\n]{0,60}\b(image|photo|illustration|visuel|affiche|dessin|portrait|banni[èe]re|flyer|poster|wallpaper|fond d'[ée]cran)\b/i;
+async function send(){
+  if (busy) return;
+  if (recOn) stopRec();
+  const text = inp.value.trim();
+  if (!text && !attach.length) return;
+  if (!cur) newChat();
+  const files = attach.slice();
+  const wantImage = imageMode || IMG_INTENT.test(text);
+  if (wantImage && !user) { openLogin("Connecte-toi pour créer jusqu'à " + CONFIG.DAILY_IMAGES + " images gratuites par jour."); return; }
+  inp.value = ""; fit(); attach = []; renderChips();
+  if (wantImage) { setImageMode(false); await makeImage(text, files, false); return; }
+
+  const um = { r: "u", t: text || "Analyse cette image.", a: files.map(f => f.url), raw: files };
+  cur.messages.push(um);
+  if (!cur.title) { cur.title = (text || "Analyse d'image").slice(0, 44); $("ttl").textContent = cur.title; }
+  renderChat();
+  const am = { r: "m", t: "" };
+  cur.messages.push(am);
+  col.insertAdjacentHTML("beforeend", msgHTML(am, cur.messages.length - 1));
+  const el = col.lastElementChild.querySelector(".txt");
+  el.innerHTML = '<div class="think"><i></i><i></i><i></i></div>';
+  col.lastElementChild.querySelector(".acts").classList.add("hidden");
+  scrollDown(true);
+  setBusy(true); abortFlag = false;
+  try {
+    const contents = toContents(cur.messages.slice(0, -1), true);
+    const out = await streamAnswer(contents, el);
+    am.t = out || (abortFlag ? "(réponse interrompue)" : "…");
+    el.innerHTML = md(am.t);
+  } catch (e) {
+    am.t = friendly(e); am.err = true; el.innerHTML = '<div class="err">' + esc(am.t) + '</div>';
+  }
+  col.lastElementChild.querySelector(".acts").classList.remove("hidden");
+  cur.messages.forEach(m => { delete m.raw; });
+  setBusy(false); scrollDown();
+  if (!am.err) { await store.save(cur); await refreshList(); }
+}
+async function refreshList(){ chats = await store.list(); renderHist(); }
+
+/* ================= Création d'images (3 par jour) ================= */
+async function loadQuota(){
+  if (!user) { imagesLeft = CONFIG.DAILY_IMAGES; showQuota(); return; }
+  try {
+    const s = await getDoc(doc(db, "users", user.uid, "usage", dayKey()));
+    imagesLeft = Math.max(0, CONFIG.DAILY_IMAGES - (s.exists() ? (s.data().count || 0) : 0));
+  } catch (e) { imagesLeft = CONFIG.DAILY_IMAGES; }
+  showQuota();
+}
+function showQuota(){ $("qLeft").textContent = imagesLeft; $("quota").style.opacity = user ? 1 : .7; }
+async function useQuota(){
+  const ref = doc(db, "users", user.uid, "usage", dayKey());
+  await runTransaction(db, async tx => {
+    const s = await tx.get(ref); const c = s.exists() ? (s.data().count || 0) : 0;
+    if (c >= CONFIG.DAILY_IMAGES) throw new Error("LIMIT");
+    tx.set(ref, { count: c + 1 });
+  });
+  imagesLeft = Math.max(0, imagesLeft - 1); showQuota();
+}
+async function makeImage(text, files, again){
+  if (busy) return;
+  if (!user) { openLogin("Connecte-toi pour créer jusqu'à " + CONFIG.DAILY_IMAGES + " images gratuites par jour."); return; }
+  await loadQuota();
+  if (imagesLeft <= 0) {
+    cur.messages.push({ r: "u", t: text });
+    cur.messages.push({ r: "m", t: "Tu as utilisé tes " + CONFIG.DAILY_IMAGES + " images gratuites d'aujourd'hui. Elles reviennent demain. En attendant, je peux t'aider à préparer ton idée : couleurs, composition, texte, style.", err: false });
+    renderChat(); return;
+  }
+  if (!cur) newChat();
+  if (!cur.title) { cur.title = ("Image : " + text).slice(0, 44); $("ttl").textContent = cur.title; }
+  if (!again) cur.messages.push({ r: "u", t: text || "Crée une image.", a: files.map(f => f.url) });
+  renderChat();
+  setBusy(true); abortFlag = false;
+  // 1) l'IA transforme la demande en description détaillée pour le générateur d'images
+  let prompt = text;
+  try {
+    const parts = [];
+    files.forEach(a => parts.push({ inlineData: { mimeType: a.mime, data: a.data } }));
+    parts.push({ text: "Tu écris des prompts pour un générateur d'images (modèle Flux). Transforme la demande suivante en UN prompt en anglais de 40 à 90 mots : sujet précis, style (photographie, illustration, 3D, affiche graphique…), composition, éclairage, palette de couleurs, ambiance, qualité. " +
+      (files.length ? "Des images de référence sont jointes : décris fidèlement leur sujet, leurs couleurs et leur style, et reprends-les dans le prompt. " : "") +
+      "N'ajoute aucun texte écrit dans l'image sauf si la demande l'exige (le texte généré par IA est souvent déformé). Réponds uniquement avec le prompt, sans guillemets.\n\nDemande : " + text });
+    const p = (await oneShot([{ role: "user", parts }])).trim().replace(/^["'`]+|["'`]+$/g, "");
+    if (p.length > 15) prompt = p.slice(0, 900);
+  } catch (e) { if (DEBUG) console.error(e); }
+  // 2) la demande est envoyée au générateur d'images
+  const seed = Math.floor(Math.random() * 1e9);
+  const url = CONFIG.IMAGE_URL(prompt, seed);
+  const m = { r: "m", t: "", u: url, p: text };
+  cur.messages.push(m);
+  renderChat();
+  const box = col.lastElementChild.querySelector(".imgbox");
+  const okImg = await new Promise(res => {
+    const done = () => res(!!box.querySelector("img.ok"));
+    box.addEventListener("imgok", done, { once: true });
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      const fail = box.querySelector(".sk") && /pas pu/.test(box.textContent);
+      if (fail || Date.now() - t0 > 120000) { clearInterval(iv); res(false); }
+      if (box.querySelector("img.ok")) clearInterval(iv);
+    }, 1000);
+  });
+  if (okImg) {
+    try { await useQuota(); } catch (e) { if (String(e.message) === "LIMIT") { m.t = "Limite du jour atteinte."; } else if (DEBUG) console.error(e); }
+    m.t = m.t || "Voici ton image. Dis-moi ce que tu veux changer : couleurs, style, composition…";
+    col.lastElementChild.querySelector(".body").insertAdjacentHTML("beforeend", '<div class="txt" style="margin-top:10px">' + md(m.t) + '</div>');
+    await store.save(cur); await refreshList();
+  } else {
+    cur.messages.pop();
+    cur.messages.push({ r: "m", t: "Je n'ai pas réussi à créer l'image pour le moment (ton quota du jour n'est pas utilisé). Réessaie dans un instant.", err: true });
+    renderChat();
+  }
+  setBusy(false); scrollDown(true);
+}
+
+/* ================= Connexion ================= */
+function openLogin(why){
+  $("loginWhy").textContent = why || "Retrouve tes anciennes discussions et crée jusqu'à " + CONFIG.DAILY_IMAGES + " images gratuites par jour.";
+  $("loginNote").textContent = ""; $("loginModal").classList.remove("hidden"); openSide(false);
+}
+const closeLogin = () => $("loginModal").classList.add("hidden");
+$("loginBtn").onclick = () => openLogin();
+$("loginClose").onclick = closeLogin; $("guestBtn").onclick = closeLogin;
+$("loginModal").addEventListener("click", e => { if (e.target.id === "loginModal") closeLogin(); });
+function lnote(t, ok){ const n = $("loginNote"); n.textContent = t; n.classList.toggle("ok", !!ok); }
+$("googleBtn").onclick = async () => {
+  lnote("Ouverture de Google…", true);
+  const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" });
+  try { await signInWithPopup(auth, p); closeLogin(); }
+  catch (e) {
+    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment" || e.code === "auth/web-storage-unsupported") { try { await signInWithRedirect(auth, p); return; } catch (x) { e = x; } }
+    if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") { lnote(""); return; }
+    lnote(e.code === "auth/unauthorized-domain" ? "Ce domaine n'est pas autorisé dans Firebase." : e.code === "auth/operation-not-allowed" ? "La connexion Google n'est pas encore activée." : "Connexion impossible (" + (e.code || e.message) + ")");
+  }
+};
+getRedirectResult(auth).catch(() => {});
+let confirmation = null, verifier = null;
+$("phoneSend").onclick = async () => {
+  const n = normPhone($("phone").value);
+  if (!/^\d{8,15}$/.test(n) || (n.slice(0, 3) === "243" && n.length !== 12)) { lnote("Numéro invalide. Écris-le comme d'habitude, ex. 081 234 5678."); return; }
+  lnote("Envoi du SMS…", true); $("phoneSend").disabled = true;
+  try {
+    if (!verifier) verifier = new RecaptchaVerifier(auth, "recaptcha", { size: "invisible" });
+    confirmation = await signInWithPhoneNumber(auth, "+" + n, verifier);
+    $("phStep1").classList.add("hidden"); $("phStep2").classList.remove("hidden"); lnote("Code envoyé par SMS au +" + n + ".", true); $("code").focus();
+  } catch (e) {
+    try { verifier && verifier.clear(); } catch (x) {} verifier = null;
+    const map = { "auth/operation-not-allowed": "La connexion par SMS n'est pas encore activée. Utilise Google pour le moment.", "auth/billing-not-enabled": "La connexion par SMS n'est pas encore activée. Utilise Google pour le moment.", "auth/too-many-requests": "Trop de tentatives. Réessaie plus tard.", "auth/invalid-phone-number": "Numéro invalide." };
+    lnote(map[e.code] || "SMS impossible pour le moment. Utilise Google. (" + (e.code || e.message) + ")");
+  }
+  $("phoneSend").disabled = false;
+};
+$("codeOk").onclick = async () => {
+  const c = $("code").value.trim(); if (c.length < 6 || !confirmation) { lnote("Entre le code à 6 chiffres."); return; }
+  try { await confirmation.confirm(c); closeLogin(); $("phStep2").classList.add("hidden"); $("phStep1").classList.remove("hidden"); }
+  catch (e) { lnote(e.code === "auth/invalid-verification-code" ? "Code incorrect." : "Validation impossible (" + (e.code || e.message) + ")"); }
+};
+$("logoutBtn").onclick = async () => { openSide(false); await signOut(auth); toast("Déconnecté"); };
+
+let firstAuth = true;
+onAuthStateChanged(auth, async u => {
+  const wasUser = user && user.uid;
+  user = u; modelObj = null; renderUser();
+  if (u) {
+    try { await setDoc(doc(db, "users", u.uid), { name: u.displayName || "", email: u.email || "", phone: u.phoneNumber || "", lastSeen: serverTimestamp() }, { merge: true }); } catch (e) {}
+  }
+  await loadQuota();
+  chats = await store.list();
+  if (u && chats.length && (firstAuth || wasUser !== u.uid) && (!cur || !cur.messages.length)) {
+    // le client est reconnu : on rouvre sa dernière discussion
+    const c = await store.get(chats[0].id);
+    if (c) { cur = { id: chats[0].id, title: c.title, messages: c.messages || [] }; $("ttl").textContent = cur.title; renderChat(); }
+  } else if (!cur || !cur.messages.length) { newChat(); }
+  else if (!u && wasUser) { newChat(); }
+  else if (cur && !cur.messages.length) renderWelcome();
+  renderHist(); firstAuth = false;
+});
+
+/* ================= Installation de l'application ================= */
+let deferred = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; $("installBtn").classList.remove("hidden"); });
+window.addEventListener("appinstalled", () => { $("installBtn").classList.add("hidden"); toast("Application installée"); });
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+if (!isStandalone && /iPhone|iPad|iPod/i.test(navigator.userAgent)) $("installBtn").classList.remove("hidden");
+$("installBtn").onclick = async () => {
+  if (deferred) { deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; $("installBtn").classList.add("hidden"); }
+  else toast("Sur iPhone : touche Partager puis « Sur l'écran d'accueil ».");
+};
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+newChat();
+if (location.hash === "#installer" && !isStandalone) setTimeout(() => { openSide(true); toast(deferred ? "Touche « Installer l'application »" : "Menu du navigateur ⋮ puis « Installer l'application »"); }, 900);
+</script>
+</body>
+</html>
