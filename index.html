@@ -6,12 +6,6 @@
 <title>MINZOTO Lab | Studio créatif</title>
 <meta name="description" content="MINZOTO Lab, studio créatif : logos, affiches, portraits numériques et retouche photo.">
 <meta name="theme-color" content="#171717">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-<link rel="manifest" href="/icons/site.webmanifest">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="MINZOTO Lab">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="MINZOTO Lab">
@@ -304,20 +298,6 @@ html.introOn { overflow: hidden; }
 @keyframes introHint { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
 #intro.go #introBtn { opacity: 0 !important; animation: none; pointer-events: none; }
 #introWhite { position: absolute; inset: 0; background: #fff; opacity: 0; will-change: opacity; pointer-events: none; }
-
-/* ---------- Commander une offre ---------- */
-.order-btn { display: inline-block; margin-top: 12px; border: 0; cursor: pointer; font: inherit; font-weight: 800; font-size: 14px; background: #ffdd12; color: #000; padding: 11px 20px; border-radius: 999px; }
-.order-btn:hover { background: #ffe94d; }
-.omodal { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.omodal .obox { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 430px; max-height: 92vh; overflow: auto; position: relative; }
-.omodal h3 { margin: 0 28px 4px 0; font-size: 20px; }
-.omodal .osum { background: #fff6d8; border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.5; margin: 10px 0 0; color: #444; }
-.omodal .oclose { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 28px; line-height: 1; cursor: pointer; color: #555; }
-.omodal .form { margin-top: 6px; }
-.omodal .form input[type=text], .omodal .form textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 7px; font: inherit; font-size: 16px; }
-.omodal .form textarea { min-height: 90px; }
-#oBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
-#oBtn:disabled { opacity: .6; cursor: default; }
 </style>
 <noscript><style>#intro { display: none !important; }</style></noscript>
 </head>
@@ -512,25 +492,6 @@ html.introOn { overflow: hidden; }
   </section>
 </main>
 
-<div id="orderModal" class="omodal hidden" role="dialog" aria-modal="true" aria-label="Commander cette offre">
-  <div class="obox">
-    <button class="oclose" id="oClose" type="button" aria-label="Fermer">×</button>
-    <h3>Commander cette offre</h3>
-    <div class="osum" id="oSum"></div>
-    <form id="orderForm" class="form" novalidate>
-      <label for="oName">Nom et prénom</label>
-      <input id="oName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
-      <label for="oWa">Ton numéro WhatsApp</label>
-      <input id="oWa" type="text" inputmode="tel" autocomplete="tel" placeholder="Ex. 081 234 5678">
-      <label for="oText">Ta commande en quelques mots (facultatif)</label>
-      <textarea id="oText" placeholder="Ex. Je veux le logo pour mon salon, en noir et or." maxlength="1000"></textarea>
-      <input class="hp" id="oHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="btn gold" id="oBtn" type="submit">Passer la commande</button>
-      <p id="oOut" class="mmsg" role="status"></p>
-    </form>
-  </div>
-</div>
-
 <div id="viewer" class="viewer hidden" role="dialog" aria-modal="true" aria-label="Création en grand">
   <button class="x" id="vClose" type="button" aria-label="Fermer">×</button>
   <button class="prev" id="vPrev" type="button" aria-label="Création précédente">‹</button>
@@ -709,10 +670,9 @@ try {
   const snap = await getDocs(query(collection(db,"offers"), orderBy("createdAt","desc")));
   const now = new Date(), pad = n => String(n).padStart(2, "0");
   const today = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
-  const active = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => o.title && (!o.endDate || o.endDate >= today));
-  window.__offers = active;
+  const active = snap.docs.map(d => d.data()).filter(o => o.title && (!o.endDate || o.endDate >= today));
   if (active.length) {
-    document.getElementById("promoGrid").innerHTML = active.map((o, idx) => {
+    document.getElementById("promoGrid").innerHTML = active.map(o => {
       let when = "";
       if (o.endDate) {
         const left = Math.ceil((new Date(o.endDate + "T23:59:59") - now) / 86400000);
@@ -723,64 +683,11 @@ try {
         + (o.description ? `<p class="intro">${esc(o.description)}</p>` : "")
         + (o.price ? `<p class="price">${esc(o.price)}</p>` : "")
         + (when ? `<p class="when">${esc(when)}</p>` : "")
-        + `<button type="button" class="order-btn" data-order="${idx}">Commander</button>`
         + `</div></article>`;
     }).join("");
     document.getElementById("promos").classList.remove("hidden");
   }
 } catch (e) { console.warn("Promotions non chargées", e); }
-
-// Commander une offre : la commande arrive dans l'administration (onglet Commandes)
-(function () {
-  let current = null;
-  const $o = id => document.getElementById(id);
-  function oSay(text, ok) { const o = $o("oOut"); o.textContent = text; o.className = "mmsg " + (ok ? "ok" : "err"); }
-  function closeOrder() { $o("orderModal").classList.add("hidden"); current = null; }
-  document.getElementById("promoGrid").addEventListener("click", ev => {
-    const b = ev.target.closest && ev.target.closest("[data-order]");
-    if (!b) return;
-    const o = (window.__offers || [])[Number(b.getAttribute("data-order"))];
-    if (!o) return;
-    current = o;
-    $o("oSum").textContent = o.title + (o.description ? " — " + o.description : "") + (o.price ? " (" + o.price + ")" : "");
-    $o("oOut").textContent = "";
-    $o("orderModal").classList.remove("hidden");
-    setTimeout(() => $o("oName").focus(), 50);
-  });
-  $o("oClose").addEventListener("click", closeOrder);
-  $o("orderModal").addEventListener("click", e => { if (e.target.id === "orderModal") closeOrder(); });
-  $o("orderForm").addEventListener("submit", async ev => {
-    ev.preventDefault();
-    if (!current) return;
-    if ($o("oHp").value) { oSay("Merci ! Ta commande est bien reçue.", true); return; }
-    const name = $o("oName").value.trim().replace(/\s+/g, " ");
-    const wa = normPhone($o("oWa").value);
-    const message = $o("oText").value.trim().slice(0, 1000);
-    if (name.length < 2 || name.length > 80) { oSay("Entre ton nom et ton prénom."); return; }
-    if (!phoneOk(wa)) { oSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
-    try {
-      const last = Number(localStorage.getItem("mz_order_t") || 0);
-      if (Date.now() - last < 30000) { oSay("Ta commande vient d'être envoyée. Attends un peu avant d'en envoyer une autre."); return; }
-    } catch (e) {}
-    const btn = $o("oBtn"); btn.disabled = true; oSay("Envoi en cours…", true);
-    try {
-      await addDoc(collection(db, "orders"), {
-        offerId: String(current.id || "").slice(0, 80),
-        offerTitle: String(current.title || "").slice(0, 120),
-        offerDescription: String(current.description || "").slice(0, 400),
-        offerPrice: String(current.price || "").slice(0, 80),
-        name, whatsapp: wa, message, status: "new", createdAt: serverTimestamp()
-      });
-      try { localStorage.setItem("mz_order_t", String(Date.now())); } catch (e) {}
-      $o("oText").value = "";
-      oSay("Merci ! Ta commande est bien reçue. Tu seras contacté(e) sur WhatsApp.", true);
-      setTimeout(closeOrder, 2600);
-    } catch (e) {
-      oSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi sur WhatsApp.");
-    }
-    btn.disabled = false;
-  });
-})();
 
 // Témoignages de clients
 try {
@@ -992,4 +899,85 @@ memberForm.addEventListener("submit", async ev => {
       ctx.moveTo(x - L, y); ctx.lineTo(x + L, y);
       ctx.moveTo(x, y - L); ctx.lineTo(x, y + L);
       ctx.stroke();
-      ctx.fillStyle = "rgba(" + col + "," + Ma
+      ctx.fillStyle = "rgba(" + col + "," + Math.min(1, a * 1.2).toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(x, y, s.r * .45, 0, 6.2832); ctx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  /* --- la grande étoile commence au centre de l'écran --- */
+  var dx = 0, dy = 0;
+  function placeStar1() {
+    if (started) return;
+    dx = stage.offsetWidth * 0.1525; dy = stage.offsetHeight * 0.0361;
+    p1.style.transform = "translate3d(" + dx + "px," + dy + "px,0)";
+  }
+  var easeStd = "cubic-bezier(.4,0,.2,1)";
+  var blink = [
+    sv(p1).animate([{ opacity: .5 }, { opacity: 1 }, { opacity: .5 }], { duration: 1500, iterations: Infinity, easing: "ease-in-out" }),
+    g(p1).animate([
+      { opacity: .18, transform: "translate(-50%,-50%) scale(.85)" },
+      { opacity: 1, transform: "translate(-50%,-50%) scale(1.15)" },
+      { opacity: .18, transform: "translate(-50%,-50%) scale(.85)" }
+    ], { duration: 1500, iterations: Infinity, easing: "ease-in-out" })
+  ];
+
+  function finish() {
+    cancelAnimationFrame(raf);
+    root.classList.remove("introOn");
+    if (intro.parentNode) intro.parentNode.removeChild(intro);
+    done();
+  }
+  function start() {
+    if (started) return;
+    started = true;
+    intro.classList.add("go");
+    if (reduce) {
+      root.classList.add("reveal"); intro.classList.add("out"); setTimeout(finish, 600); return;
+    }
+    blink.forEach(function (a) { a.cancel(); });
+    /* 1) la grande étoile revient à sa place, sans autre mouvement ; elle s'illumine fortement */
+    p1.animate([{ transform: "translate3d(" + dx + "px," + dy + "px,0)" }, { transform: "translate3d(0,0,0)" }],
+      { duration: 1100, easing: "cubic-bezier(.65,0,.25,1)", fill: "forwards" });
+    g(p1).animate([
+      { opacity: .5, transform: "translate(-50%,-50%) scale(1)" },
+      { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" }
+    ], { duration: 1100, easing: easeStd, fill: "forwards" });
+    /* 2) les deux autres étoiles apparaissent là où elles doivent être, avec une légère rotation, puis flottent doucement */
+    [[p2, 950, -170, 3300], [p3, 1300, 150, 3700]].forEach(function (c) {
+      var p = c[0], delay = c[1], rot = c[2], sway = c[3];
+      p.animate([
+        { opacity: 0, transform: "scale(.05) rotate(" + rot + "deg)" },
+        { opacity: 1, transform: "scale(1) rotate(0deg)" }
+      ], { duration: 1250, delay: delay, easing: "cubic-bezier(.16,.9,.3,1)", fill: "both" });
+      p.animate([
+        { transform: "scale(1) rotate(0deg)" }, { transform: "scale(1.05) rotate(6deg)" },
+        { transform: "scale(1) rotate(0deg)" }, { transform: "scale(1.05) rotate(-6deg)" },
+        { transform: "scale(1) rotate(0deg)" }
+      ], { duration: sway, delay: delay + 1250, iterations: Infinity, easing: "ease-in-out" });
+      g(p).animate([
+        { opacity: 0, transform: "translate(-50%,-50%) scale(.6)" },
+        { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" }
+      ], { duration: 1250, delay: delay, easing: easeStd, fill: "both" });
+    });
+    /* 3) toutes les lueurs montent fort, puis tout devient blanc */
+    [p1, p2, p3].forEach(function (p) {
+      g(p).animate([
+        { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" },
+        { opacity: 1, transform: "translate(-50%,-50%) scale(2.7)" }
+      ], { duration: 1700, delay: 2000, easing: "cubic-bezier(.5,0,.9,.6)", fill: "forwards" });
+    });
+    white.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1300, delay: 2600, easing: "ease-in-out", fill: "forwards" });
+    setTimeout(function () { root.classList.add("reveal"); intro.classList.add("out"); }, 3900);
+    setTimeout(finish, 4800);
+  }
+
+  p1.addEventListener("click", start);
+  $("introBtn").addEventListener("click", start);
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
+  resize();
+  raf = requestAnimationFrame(frame);
+})();
+</script>
+</body>
+                                </html>
