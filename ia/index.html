@@ -323,6 +323,7 @@ const CONFIG = {
   LANG_VOICE: "fr-FR"
 };
 const DEBUG = /[?&]debug=1/.test(location.search);
+const SHOW_ERRORS = true; // temporaire : affiche le code technique des erreurs. Mettre false une fois l'IA stable.
 
 const fbApp = initializeApp({
   apiKey: "AIzaSyDLruZVIQKBQQS6fKW2ZNnCZReJEO5x04k",
@@ -692,11 +693,12 @@ function toContents(msgs, withAttach){
 function friendly(e){
   const m = String((e && (e.message || e.code)) || e || "");
   if (DEBUG) console.error(e);
-  if (/quota|429|resource.?exhausted|rate/i.test(m)) return "Je suis très sollicité en ce moment. Réessaie dans une minute.";
-  if (/network|fetch|failed to fetch|offline|ERR_/i.test(m)) return "Pas de connexion internet. Vérifie ton réseau puis réessaie.";
-  if (/safety|blocked|prohibited/i.test(m)) return "Je ne peux pas répondre à cette demande. Essaie de la reformuler.";
-  if (/api.?not.?enabled|has not been used|disabled|permission|403|app.?check|API key/i.test(m)) return "Le service d'intelligence artificielle n'est pas encore activé. Réessaie plus tard ou contacte MINZOTO Lab." + (DEBUG ? " [" + m.slice(0, 200) + "]" : "");
-  return "Une erreur est survenue. Réessaie dans un instant." + (DEBUG ? " [" + m.slice(0, 200) + "]" : "");
+  const d = (DEBUG || SHOW_ERRORS) ? "\n\nCode technique : " + m.replace(/https?:\/\/\S+/g, "…").slice(0, 260) : "";
+  if (/\b429\b|quota|resource.?exhausted|rate.?limit|too many requests/i.test(m)) return "Je suis très sollicité en ce moment. Réessaie dans une minute." + d;
+  if (/network|failed to fetch|offline|ERR_INTERNET|ERR_NETWORK/i.test(m)) return "Pas de connexion internet. Vérifie ton réseau puis réessaie." + d;
+  if (/safety|blocked|prohibited/i.test(m)) return "Je ne peux pas répondre à cette demande. Essaie de la reformuler." + d;
+  if (/api.?not.?enabled|has not been used|disabled|permission|\b403\b|app.?check|API key|referer|not allowed|unregistered/i.test(m)) return "Le service d'intelligence artificielle n'est pas encore activé. Réessaie plus tard ou contacte MINZOTO Lab." + d;
+  return "Une erreur est survenue. Réessaie dans un instant." + d;
 }
 async function streamAnswer(contents, el){
   const { names } = await getModel();
