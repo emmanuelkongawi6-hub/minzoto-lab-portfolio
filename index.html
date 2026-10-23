@@ -949,7 +949,80 @@ try {
     btn.disabled = false;
   });
 })();
+await addDoc(collection(db, "quotes"), data);
+    try { localStorage.setItem("mz_quote_t", String(Date.now())); } catch (e) {}
+    quoteForm.reset();
+    qSay("Merci ! Ta demande est bien reçue. Tu recevras une réponse sur WhatsApp.", true);
+  } catch (e) {
+    qSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi sur WhatsApp.");
+  }
+  btn.disabled = false;
+});
 
+// Inscription membre
+const memberForm = document.getElementById("memberForm");
+function mSay(text, ok) { const o = document.getElementById("mMsg"); o.textContent = text; o.className = "mmsg " + (ok ? "ok" : "err"); }
+try { if (localStorage.getItem("mz_member_done") === "1") { memberForm.classList.add("hidden"); document.getElementById("mDone").classList.remove("hidden"); } } catch (e) {}
+memberForm.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
+  const waRaw = document.getElementById("mWa").value.trim();
+  const wa = waRaw ? normPhone(waRaw) : "";
+  const facebook = document.getElementById("mFb").value.trim().slice(0, 200);
+  const email = document.getElementById("mEmail").value.trim().slice(0, 120);
+  if (name.length < 2 || name.length > 80) { mSay("Entre ton nom et ton prénom."); return; }
+  if (!wa && !facebook) { mSay("Remplis au moins ton numéro WhatsApp ou ton compte Facebook."); return; }
+  if (wa && !phoneOk(wa)) { mSay("Ton numéro WhatsApp n'est pas valide. Exemple : 081 234 5678."); return; }
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mSay("Cette adresse email n'est pas valide."); return; }
+  if (!document.getElementById("mConsent").checked) { mSay("Coche la case pour accepter d'être contacté(e)."); return; }
+  const btn = document.getElementById("mBtn");
+  btn.disabled = true; mSay("Envoi en cours…", true);
+  try {
+    await addDoc(collection(db, "members"), { name, whatsapp: wa, facebook, email, createdAt: serverTimestamp() });
+    try { localStorage.setItem("mz_member_done", "1"); } catch (e) {}
+    memberForm.reset();
+    memberForm.classList.add("hidden");
+    document.getElementById("mDone").classList.remove("hidden");
+    mSay("", true);
+  } catch (e) {
+    mSay("Inscription impossible pour le moment. Réessaie plus tard.");
+  }
+  btn.disabled = false;
+});
+
+// Annonce en haut du site
+try {
+  const n = await getDoc(doc(db, "site", "news"));
+  if (n.exists()) {
+    const text = String(n.data().text || "").trim();
+    const id = String(n.data().id || text);
+    let closed = "";
+    try { closed = localStorage.getItem("mz_news_closed") || ""; } catch (e) {}
+    if (text && closed !== id) {
+      document.getElementById("newsText").textContent = " " + text;
+      document.getElementById("newsBar").classList.remove("hidden");
+      document.getElementById("newsClose").addEventListener("click", () => {
+        document.getElementById("newsBar").classList.add("hidden");
+        try { localStorage.setItem("mz_news_closed", id); } catch (e) {}
+      });
+    }
+  }
+} catch (e) { console.warn("Annonce non chargée", e); }
+
+// Compteur de visiteurs (ta propre visite n'est pas comptée)
+try {
+  if (localStorage.getItem("mz_admin") !== "1") {
+    let vid = localStorage.getItem("mz_vid");
+    if (!vid) { vid = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("mz_vid", vid); }
+    const now = new Date(), pad = n => String(n).padStart(2, "0");
+    const day = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+    await setDoc(doc(db, "visitors", vid), { createdAt: serverTimestamp() });
+    await setDoc(doc(db, "visits", day + "_" + vid), { day, createdAt: serverTimestamp() });
+  }
+} catch (e) { }
+</script>
+</body>
+</html>
 // Témoignages de clients
 try {
   const snap = await getDocs(query(collection(db,"testimonials"), orderBy("createdAt","desc")));
