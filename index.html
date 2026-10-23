@@ -318,6 +318,19 @@ html.introOn { overflow: hidden; }
 .omodal .form textarea { min-height: 90px; }
 #oBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
 #oBtn:disabled { opacity: .6; cursor: default; }
+
+/* ---------- Minzoto IA (application) ---------- */
+.ia-sec { padding: 40px 6%; }
+.ia-card { max-width: 900px; margin: 0 auto; background: #0b0b0d; color: #fff; border-radius: 22px; padding: 26px 22px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; position: relative; overflow: hidden; border: 1px solid #26262c; }
+.ia-card::before { content: ""; position: absolute; width: 380px; height: 380px; right: -120px; top: -160px; background: radial-gradient(closest-side, rgba(255,221,18,.22), transparent 72%); pointer-events: none; }
+.ia-card img { width: 78px; height: 78px; border-radius: 20px; flex: none; position: relative; box-shadow: 0 8px 30px rgba(255,221,18,.2); }
+.ia-txt { flex: 1; min-width: 230px; position: relative; }
+.ia-txt h2 { margin: 0 0 6px; font-size: 26px; }
+.ia-txt h2 b { color: #ffdd12; }
+.ia-txt p { margin: 0; color: #c9c9d1; line-height: 1.6; font-size: 15px; }
+.ia-btns { display: flex; gap: 10px; flex-wrap: wrap; position: relative; width: 100%; }
+.ia-btns a { margin: 0; }
+.ia-btns .btn.line { background: transparent; color: #fff; border: 1px solid #44444c; }
 </style>
 <noscript><style>#intro { display: none !important; }</style></noscript>
 </head>
@@ -487,6 +500,7 @@ html.introOn { overflow: hidden; }
     <a href="#services" data-t="navPrices" data-tl="Menu : Tarifs">Tarifs</a>
     <a href="#devis" data-t="navQuote" data-tl="Menu : Devis">Devis</a>
     <a href="#membre" data-t="navMember" data-tl="Menu : Membre">Membre</a>
+    <a href="/ia/">IA</a>
     <a href="#contact" data-t="navContact" data-tl="Menu : Contact">Contact</a>
   </nav>
 </header>
@@ -641,6 +655,20 @@ html.introOn { overflow: hidden; }
       <p id="mMsg" class="mmsg" role="status"></p>
     </form>
     <p id="mDone" class="mmsg ok hidden">Merci, tu es membre ! Tu seras prévenu(e) des nouveautés de MINZOTO Lab.</p>
+  </section>
+
+  <section class="ia-sec" id="ia">
+    <div class="ia-card">
+      <img src="/icons/icon-512.png" alt="Minzoto IA">
+      <div class="ia-txt">
+        <h2>Minzoto <b>IA</b></h2>
+        <p>Notre assistant IA : design graphique, communication visuelle, 3 images gratuites par jour et réponses à toutes tes questions. Gratuit, par écrit ou à la voix.</p>
+      </div>
+      <div class="ia-btns">
+        <a class="btn gold" href="/ia/">Ouvrir Minzoto IA</a>
+        <a class="btn line" href="/ia/#installer">Installer l'application</a>
+      </div>
+    </div>
   </section>
 
   <section id="contact" class="contact">
@@ -960,117 +988,4 @@ quoteForm.addEventListener("submit", async ev => {
     const data = { name, whatsapp: wa, service, message, status: "new", createdAt: serverTimestamp() };
     if (budget) data.budget = budget;
     if (delay) data.delay = delay;
-    await addDoc(collection(db, "quotes"), data);
-    try { localStorage.setItem("mz_quote_t", String(Date.now())); } catch (e) {}
-    ["qBudget", "qDelay", "qText"].forEach(id => { document.getElementById(id).value = ""; });
-    qSay("Merci ! Ta demande est bien reçue. Tu recevras une réponse sur WhatsApp.", true);
-  } catch (e) {
-    qSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi directement sur WhatsApp.");
-  }
-  btn.disabled = false;
-});
-
-// Compteur de visiteurs : anonyme (identifiant aléatoire, aucune donnée personnelle).
-// Une personne est comptée une seule fois au total, et une fois par jour.
-(async () => {
-  let vid = "";
-  try {
-    if (localStorage.getItem("mz_admin")) return; // ne pas compter les visites de l'administrateur
-    vid = localStorage.getItem("mz_vid") || "";
-    if (!vid) {
-      vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-        : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
-      localStorage.setItem("mz_vid", vid);
-    }
-  } catch (e) { return; }
-  try {
-    if (!localStorage.getItem("mz_counted")) {
-      await setDoc(doc(db, "visitors", vid), { firstSeen: serverTimestamp() });
-      localStorage.setItem("mz_counted", "1");
-    }
-  } catch (e) { /* silencieux */ }
-  try {
-    const d = new Date(), p = n => String(n).padStart(2, "0");
-    const day = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-    if (localStorage.getItem("mz_day") !== day) {
-      await setDoc(doc(db, "visits", day + "_" + vid), { day, createdAt: serverTimestamp() });
-      localStorage.setItem("mz_day", day);
-    }
-  } catch (e) { /* silencieux */ }
-})();
-
-// Annonce affichée en haut de la page (publiée depuis l'administration)
-try {
-  const n = await getDoc(doc(db, "site", "news"));
-  if (n.exists()) {
-    const nd = n.data(), text = String(nd.text || "").trim(), nid = String(nd.id || "");
-    let seen = "";
-    try { seen = localStorage.getItem("mz_news") || ""; } catch (e) {}
-    if (text && nid !== seen) {
-      document.getElementById("newsText").textContent = " " + text;
-      document.getElementById("newsBar").classList.remove("hidden");
-      document.getElementById("newsClose").addEventListener("click", () => {
-        document.getElementById("newsBar").classList.add("hidden");
-        try { localStorage.setItem("mz_news", nid); } catch (e) {}
-      });
-    }
-  }
-} catch (e) { console.warn("Annonce non chargée", e); }
-
-// Inscription des membres (email + WhatsApp)
-const memberForm = document.getElementById("memberForm");
-const mMsg = document.getElementById("mMsg");
-function memberDone() {
-  memberForm.classList.add("hidden");
-  document.getElementById("mDone").classList.remove("hidden");
-}
-function memberSay(text, ok) { mMsg.textContent = text; mMsg.className = "mmsg " + (ok ? "ok" : "err"); }
-try { if (localStorage.getItem("mz_member")) memberDone(); } catch (e) {}
-// Identifiant Facebook (pseudo ou numéro) tiré d'un lien ou d'un nom, en minuscules sans caractères spéciaux
-function fbHandle(v) {
-  let s = String(v || "").trim();
-  if (/^(https?:\/\/|www\.|m\.|facebook\.com|fb\.com)/i.test(s)) {
-    try {
-      const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
-      s = u.pathname.replace(/\//g, "") === "profile.php"
-        ? (u.searchParams.get("id") || "")
-        : (u.pathname.split("/").filter(Boolean)[0] || "");
-    } catch (e) { s = ""; }
-  }
-  return s.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._-]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 100);
-}
-memberForm.addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const email = document.getElementById("mEmail").value.trim().toLowerCase();
-  const wa = normPhone(document.getElementById("mWa").value);
-  const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
-  if (name.length < 2 || name.length > 80) { memberSay("Entre ton nom et ton prénom."); return; }
-  const rawWa = document.getElementById("mWa").value.trim();
-  const fbRaw = document.getElementById("mFb").value.trim();
-  if (rawWa && !phoneOk(wa)) { memberSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
-  if (!rawWa && !fbRaw) { memberSay("Entre ton numéro WhatsApp ou ton compte Facebook (au moins un des deux)."); return; }
-  if (fbRaw && fbRaw.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  const fbId = fbHandle(fbRaw);
-  if (!wa && fbId.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  if (email && (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254)) { memberSay("Cette adresse email n'est pas valide. Corrige-la ou laisse la case vide."); return; }
-  if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
-  const btn = document.getElementById("mBtn");
-  btn.disabled = true; memberSay("Inscription en cours…", true);
-  try {
-    const data = { name, createdAt: serverTimestamp() };
-    if (wa) data.whatsapp = wa;
-    if (fbRaw) data.facebook = fbRaw.slice(0, 200);
-    if (email) data.email = email;
-    await setDoc(doc(db, "members", wa || ("fb_" + fbId)), data);
-    try { localStorage.setItem("mz_member", "1"); } catch (e) {}
-    memberDone();
-  } catch (e) {
-    memberSay(e.code === "permission-denied"
-      ? "Ce numéro ou ce compte Facebook est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
-      : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
-  }
-  btn.disabled = false;
-});
-</script>
-</body>
-</html>
+    await addDoc(collection(db, "quotes"), dat
