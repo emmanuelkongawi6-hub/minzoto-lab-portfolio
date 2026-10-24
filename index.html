@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MINZOTO Lab">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
@@ -318,6 +319,18 @@ html.introOn { overflow: hidden; }
 .omodal .form textarea { min-height: 90px; }
 #oBtn { width: 100%; margin: 16px 0 0; border: 0; cursor: pointer; font: inherit; font-weight: bold; }
 #oBtn:disabled { opacity: .6; cursor: default; }
+
+/* ---------- Installer l'application ---------- */
+.install-fab { position: fixed; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 40; border: 1px solid #ffdd12; background: #171717; color: #ffdd12; font: inherit; font-weight: 700; font-size: 14px; padding: 12px 16px; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+.install-fab svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.install-fab.hidden { display: none !important; }
+.inst-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.inst-modal.hidden { display: none !important; }
+.inst-box { background: #fff; color: #171717; border-radius: 18px; padding: 22px 20px; max-width: 400px; width: 100%; font-family: Arial, sans-serif; }
+.inst-box h3 { margin: 0 0 8px; font-size: 20px; }
+.inst-box ol { margin: 8px 0 14px; padding-left: 20px; line-height: 1.6; font-size: 15px; }
+.inst-box p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: #555; }
+.inst-box button { width: 100%; border: 0; border-radius: 12px; padding: 13px; background: #ffdd12; color: #000; font: inherit; font-weight: 800; cursor: pointer; }
 </style>
 <noscript><style>#intro { display: none !important; }</style></noscript>
 </head>
@@ -966,125 +979,4 @@ quoteForm.addEventListener("submit", async ev => {
     const last = Number(localStorage.getItem("mz_quote_t") || 0);
     if (Date.now() - last < 60000) { qSay("Ta demande vient d'être envoyée. Attends une minute avant d'en envoyer une autre."); return; }
   } catch (e) {}
-  const btn = document.getElementById("qBtn");
-  btn.disabled = true; qSay("Envoi en cours…", true);
-  try {
-    const data = { name, whatsapp: wa, service, message, status: "new", createdAt: serverTimestamp() };
-    if (budget) data.budget = budget;
-    if (delay) data.delay = delay;
-    await addDoc(collection(db, "quotes"), data);
-    try { localStorage.setItem("mz_quote_t", String(Date.now())); } catch (e) {}
-    ["qBudget", "qDelay", "qText"].forEach(id => { document.getElementById(id).value = ""; });
-    qSay("Merci ! Ta demande est bien reçue. Tu recevras une réponse sur WhatsApp.", true);
-  } catch (e) {
-    qSay("Envoi impossible pour le moment. Réessaie plus tard ou contacte-moi directement sur WhatsApp.");
-  }
-  btn.disabled = false;
-});
-
-// Compteur de visiteurs : anonyme (identifiant aléatoire, aucune donnée personnelle).
-// Une personne est comptée une seule fois au total, et une fois par jour.
-(async () => {
-  let vid = "";
-  try {
-    if (localStorage.getItem("mz_admin")) return; // ne pas compter les visites de l'administrateur
-    vid = localStorage.getItem("mz_vid") || "";
-    if (!vid) {
-      vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-        : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
-      localStorage.setItem("mz_vid", vid);
-    }
-  } catch (e) { return; }
-  try {
-    if (!localStorage.getItem("mz_counted")) {
-      await setDoc(doc(db, "visitors", vid), { firstSeen: serverTimestamp() });
-      localStorage.setItem("mz_counted", "1");
-    }
-  } catch (e) { /* silencieux */ }
-  try {
-    const d = new Date(), p = n => String(n).padStart(2, "0");
-    const day = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-    if (localStorage.getItem("mz_day") !== day) {
-      await setDoc(doc(db, "visits", day + "_" + vid), { day, createdAt: serverTimestamp() });
-      localStorage.setItem("mz_day", day);
-    }
-  } catch (e) { /* silencieux */ }
-})();
-
-// Annonce affichée en haut de la page (publiée depuis l'administration)
-(async () => {
-try {
-  const n = await getDoc(doc(db, "site", "news"));
-  if (n.exists()) {
-    const nd = n.data(), text = String(nd.text || "").trim(), nid = String(nd.id || "");
-    let seen = "";
-    try { seen = localStorage.getItem("mz_news") || ""; } catch (e) {}
-    if (text && nid !== seen) {
-      document.getElementById("newsText").textContent = " " + text;
-      document.getElementById("newsBar").classList.remove("hidden");
-      document.getElementById("newsClose").addEventListener("click", () => {
-        document.getElementById("newsBar").classList.add("hidden");
-        try { localStorage.setItem("mz_news", nid); } catch (e) {}
-      });
-    }
-  }
-} catch (e) { console.warn("Annonce non chargée", e); }
-})();
-
-// Inscription des membres (email + WhatsApp)
-const memberForm = document.getElementById("memberForm");
-const mMsg = document.getElementById("mMsg");
-function memberDone() {
-  memberForm.classList.add("hidden");
-  document.getElementById("mDone").classList.remove("hidden");
-}
-function memberSay(text, ok) { mMsg.textContent = text; mMsg.className = "mmsg " + (ok ? "ok" : "err"); }
-try { if (localStorage.getItem("mz_member")) memberDone(); } catch (e) {}
-// Identifiant Facebook (pseudo ou numéro) tiré d'un lien ou d'un nom, en minuscules sans caractères spéciaux
-function fbHandle(v) {
-  let s = String(v || "").trim();
-  if (/^(https?:\/\/|www\.|m\.|facebook\.com|fb\.com)/i.test(s)) {
-    try {
-      const u = new URL(/^https?:/i.test(s) ? s : "https://" + s);
-      s = u.pathname.replace(/\//g, "") === "profile.php"
-        ? (u.searchParams.get("id") || "")
-        : (u.pathname.split("/").filter(Boolean)[0] || "");
-    } catch (e) { s = ""; }
-  }
-  return s.replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._-]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 100);
-}
-memberForm.addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const email = document.getElementById("mEmail").value.trim().toLowerCase();
-  const wa = normPhone(document.getElementById("mWa").value);
-  const name = document.getElementById("mName").value.trim().replace(/\s+/g, " ");
-  if (name.length < 2 || name.length > 80) { memberSay("Entre ton nom et ton prénom."); return; }
-  const rawWa = document.getElementById("mWa").value.trim();
-  const fbRaw = document.getElementById("mFb").value.trim();
-  if (rawWa && !phoneOk(wa)) { memberSay("Ton numéro WhatsApp n'est pas valide. Écris-le comme d'habitude, par exemple 081 234 5678."); return; }
-  if (!rawWa && !fbRaw) { memberSay("Entre ton numéro WhatsApp ou ton compte Facebook (au moins un des deux)."); return; }
-  if (fbRaw && fbRaw.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  const fbId = fbHandle(fbRaw);
-  if (!wa && fbId.length < 3) { memberSay("Entre le lien de ton profil Facebook ou ton nom Facebook."); return; }
-  if (email && (!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(email) || email.length > 254)) { memberSay("Cette adresse email n'est pas valide. Corrige-la ou laisse la case vide."); return; }
-  if (!document.getElementById("mConsent").checked) { memberSay("Coche la case pour accepter d'être contacté(e)."); return; }
-  const btn = document.getElementById("mBtn");
-  btn.disabled = true; memberSay("Inscription en cours…", true);
-  try {
-    const data = { name, createdAt: serverTimestamp() };
-    if (wa) data.whatsapp = wa;
-    if (fbRaw) data.facebook = fbRaw.slice(0, 200);
-    if (email) data.email = email;
-    await setDoc(doc(db, "members", wa || ("fb_" + fbId)), data);
-    try { localStorage.setItem("mz_member", "1"); } catch (e) {}
-    memberDone();
-  } catch (e) {
-    memberSay(e.code === "permission-denied"
-      ? "Ce numéro ou ce compte Facebook est peut-être déjà inscrit. Sinon, réessaie un peu plus tard."
-      : "Inscription impossible pour le moment. Vérifie ta connexion et réessaie.");
-  }
-  btn.disabled = false;
-});
-</script>
-</body>
-</html>
+  const btn = document.get
