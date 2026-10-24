@@ -333,6 +333,149 @@ html.introOn { overflow: hidden; }
   <div id="introWhite"></div>
 </div>
 <script>document.documentElement.classList.add("introOn");</script>
+<script>
+/* Intro : étoile unique sur fond noir → clic → les deux autres étoiles apparaissent, tout s'illumine jusqu'au blanc */
+(function () {
+  var done;
+  window.introDone = new Promise(function (r) { done = r; });
+  var intro = document.getElementById("intro");
+  if (!intro) { done(); return; }
+  var root = document.documentElement;
+  var seen = false; try { seen = sessionStorage.getItem("mz_intro") === "1"; } catch (e) {}
+  if (seen) { if (intro.parentNode) intro.parentNode.removeChild(intro); root.classList.remove("introOn"); root.classList.add("reveal"); done(); return; }
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $("introStage"), cv = $("introCanvas"), ctx = cv.getContext("2d");
+  var p1 = $("ip1"), p2 = $("ip2"), p3 = $("ip3"), white = $("introWhite");
+  var g = function (p) { return p.querySelector(".iglow"); };
+  var sv = function (p) { return p.querySelector(".isvg"); };
+  var started = false, raf = 0, W = 0, H = 0, dpr = 1;
+
+  /* --- petites étoiles très fines : chacune brille et bouge à sa manière --- */
+  var stars = [];
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var n = Math.max(45, Math.min(95, Math.round(W * H / 9000)));
+    stars = [];
+    for (var i = 0; i < n; i++) {
+      var kind = i % 3;
+      stars.push({
+        x: Math.random() * W, y: Math.random() * H,
+        r: rnd(.7, 2.1),
+        sp: rnd(.5, 2.6), ph: rnd(0, 6.28),            /* rythme et décalage du scintillement */
+        vx: kind === 0 ? rnd(-9, 9) : 0, vy: kind === 0 ? rnd(-7, 7) : 0,   /* dérive lente */
+        ax: kind === 1 ? rnd(6, 22) : 0, ay: kind === 1 ? rnd(6, 22) : 0,    /* balancement */
+        ws: rnd(.15, .6), wp: rnd(0, 6.28),
+        base: rnd(.45, 1), warm: Math.random() < .55
+      });
+    }
+    placeStar1();
+  }
+  function frame(now) {
+    var t = now / 1000;
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineCap = "round";
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var x = s.x + s.vx * t + s.ax * Math.sin(t * s.ws + s.wp);
+      var y = s.y + s.vy * t + s.ay * Math.cos(t * s.ws * 1.3 + s.wp);
+      x = ((x % W) + W) % W; y = ((y % H) + H) % H;
+      var tw = .5 + .5 * Math.sin(t * s.sp + s.ph);
+      tw = tw * tw;
+      var a = s.base * (.12 + .88 * tw);
+      var L = s.r * (1.6 + 5.5 * tw);
+      var col = s.warm ? "255,226,110" : "255,255,255";
+      ctx.strokeStyle = "rgba(" + col + "," + a.toFixed(3) + ")";
+      ctx.lineWidth = .7;
+      ctx.beginPath();
+      ctx.moveTo(x - L, y); ctx.lineTo(x + L, y);
+      ctx.moveTo(x, y - L); ctx.lineTo(x, y + L);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(" + col + "," + Math.min(1, a * 1.2).toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(x, y, s.r * .45, 0, 6.2832); ctx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  /* --- la grande étoile commence au centre de l'écran --- */
+  var dx = 0, dy = 0;
+  function placeStar1() {
+    if (started) return;
+    dx = stage.offsetWidth * 0.1525; dy = stage.offsetHeight * 0.0361;
+    p1.style.transform = "translate3d(" + dx + "px," + dy + "px,0)";
+  }
+  var easeStd = "cubic-bezier(.4,0,.2,1)";
+  var blink = [
+    sv(p1).animate([{ opacity: .5 }, { opacity: 1 }, { opacity: .5 }], { duration: 1500, iterations: Infinity, easing: "ease-in-out" }),
+    g(p1).animate([
+      { opacity: .18, transform: "translate(-50%,-50%) scale(.85)" },
+      { opacity: 1, transform: "translate(-50%,-50%) scale(1.15)" },
+      { opacity: .18, transform: "translate(-50%,-50%) scale(.85)" }
+    ], { duration: 1500, iterations: Infinity, easing: "ease-in-out" })
+  ];
+
+  function finish() {
+    cancelAnimationFrame(raf);
+    root.classList.remove("introOn");
+    if (intro.parentNode) intro.parentNode.removeChild(intro);
+    done();
+  }
+  function start() {
+    if (started) return;
+    started = true;
+    try { sessionStorage.setItem("mz_intro", "1"); } catch (e) {}
+    intro.classList.add("go");
+    if (reduce) {
+      root.classList.add("reveal"); intro.classList.add("out"); setTimeout(finish, 600); return;
+    }
+    blink.forEach(function (a) { a.cancel(); });
+    /* 1) la grande étoile revient à sa place, sans autre mouvement ; elle s'illumine fortement */
+    p1.animate([{ transform: "translate3d(" + dx + "px," + dy + "px,0)" }, { transform: "translate3d(0,0,0)" }],
+      { duration: 1100, easing: "cubic-bezier(.65,0,.25,1)", fill: "forwards" });
+    g(p1).animate([
+      { opacity: .5, transform: "translate(-50%,-50%) scale(1)" },
+      { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" }
+    ], { duration: 1100, easing: easeStd, fill: "forwards" });
+    /* 2) les deux autres étoiles apparaissent là où elles doivent être, avec une légère rotation, puis flottent doucement */
+    [[p2, 950, -170, 3300], [p3, 1300, 150, 3700]].forEach(function (c) {
+      var p = c[0], delay = c[1], rot = c[2], sway = c[3];
+      p.animate([
+        { opacity: 0, transform: "scale(.05) rotate(" + rot + "deg)" },
+        { opacity: 1, transform: "scale(1) rotate(0deg)" }
+      ], { duration: 1250, delay: delay, easing: "cubic-bezier(.16,.9,.3,1)", fill: "both" });
+      p.animate([
+        { transform: "scale(1) rotate(0deg)" }, { transform: "scale(1.05) rotate(6deg)" },
+        { transform: "scale(1) rotate(0deg)" }, { transform: "scale(1.05) rotate(-6deg)" },
+        { transform: "scale(1) rotate(0deg)" }
+      ], { duration: sway, delay: delay + 1250, iterations: Infinity, easing: "ease-in-out" });
+      g(p).animate([
+        { opacity: 0, transform: "translate(-50%,-50%) scale(.6)" },
+        { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" }
+      ], { duration: 1250, delay: delay, easing: easeStd, fill: "both" });
+    });
+    /* 3) toutes les lueurs montent fort, puis tout devient blanc */
+    [p1, p2, p3].forEach(function (p) {
+      g(p).animate([
+        { opacity: .85, transform: "translate(-50%,-50%) scale(1.12)" },
+        { opacity: 1, transform: "translate(-50%,-50%) scale(2.7)" }
+      ], { duration: 1700, delay: 2000, easing: "cubic-bezier(.5,0,.9,.6)", fill: "forwards" });
+    });
+    white.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1300, delay: 2600, easing: "ease-in-out", fill: "forwards" });
+    setTimeout(function () { root.classList.add("reveal"); intro.classList.add("out"); }, 3900);
+    setTimeout(finish, 4800);
+  }
+
+  p1.addEventListener("click", start);
+  $("introBtn").addEventListener("click", start);
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
+  resize();
+  raf = requestAnimationFrame(frame);
+})();
+</script>
 <div id="newsBar" class="news hidden" role="status">
   <span><b>Nouveau :</b><span id="newsText"></span></span>
   <button id="newsClose" type="button" aria-label="Fermer l'annonce">×</button>
@@ -454,7 +597,7 @@ html.introOn { overflow: hidden; }
   <section id="devis" class="quote">
     <h2 data-t="quoteTitle" data-tl="Devis : titre">Demander un devis</h2>
     <p class="intro" data-t="quoteIntro" data-tl="Devis : texte" data-tm="1">Décris ton projet : tu reçois une réponse sur WhatsApp.</p>
-    <form id="quoteForm" class="form" novalidate>
+    <form id="quoteForm" class="form" novalidate onsubmit="return false">
       <label for="qName">Nom et prénom</label>
       <input id="qName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
       <label for="qWa">Ton numéro WhatsApp</label>
@@ -482,7 +625,7 @@ html.introOn { overflow: hidden; }
   <section id="membre" class="member">
     <h2 data-t="memberTitle" data-tl="Inscription membre : titre">Deviens membre</h2>
     <p class="intro" data-t="memberIntro" data-tl="Inscription membre : texte" data-tm="1">Laisse ton numéro WhatsApp ou ton compte Facebook (ou les deux) pour être prévenu(e) quand les tarifs changent, qu'une nouvelle offre arrive ou que de nouveaux visuels sont ajoutés. Pas de Gmail en tête ? Ce n'est pas grave, il est facultatif.</p>
-    <form id="memberForm" class="form" novalidate>
+    <form id="memberForm" class="form" novalidate onsubmit="return false">
       <label for="mName">Nom et prénom</label>
       <input id="mName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
       <label for="mWa">Numéro WhatsApp</label>
@@ -517,7 +660,7 @@ html.introOn { overflow: hidden; }
     <button class="oclose" id="oClose" type="button" aria-label="Fermer">×</button>
     <h3>Commander cette offre</h3>
     <div class="osum" id="oSum"></div>
-    <form id="orderForm" class="form" novalidate>
+    <form id="orderForm" class="form" novalidate onsubmit="return false">
       <label for="oName">Nom et prénom</label>
       <input id="oName" type="text" autocomplete="name" placeholder="Ex. Jean Mukendi" maxlength="80">
       <label for="oWa">Ton numéro WhatsApp</label>
@@ -604,10 +747,13 @@ function renderChips() {
 }
 // Les projets sont affichés après l'intro, pour que l'animation reste fluide
 const introDone = window.introDone || Promise.resolve();
+async function loadProjects(tries) {
 try {
   const snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
   if (!snap.empty) { works = snap.docs.map(d => d.data()); introDone.then(() => { renderChips(); renderGallery(); }); }
-} catch (e) { console.warn("Projets non chargés", e); }
+} catch (e) { console.warn("Projets non chargés", e); if ((tries || 0) < 3) setTimeout(() => loadProjects((tries || 0) + 1), 4000); }
+}
+loadProjects(0);
 document.getElementById("catChips").addEventListener("click", e => {
   const c = e.target.getAttribute && e.target.getAttribute("data-cat");
   if (c === null || c === undefined) return;
@@ -659,6 +805,7 @@ function fillQuoteServices(list) {
 fillQuoteServices(["Création de logo", "Affiche publicitaire", "Portrait numérique"]);
 
 // Tarifs et services
+(async () => {
 try {
   const c = await getDoc(doc(db,"site","config"));
   if (c.exists()) {
@@ -701,10 +848,12 @@ try {
     }
   }
 } catch (e) { console.warn("Tarifs non chargés", e); }
+})();
 // Le bouton WhatsApp flottant utilise le même numéro que le bouton « Contacter sur WhatsApp »
 document.getElementById("waFloat").href = document.getElementById("waBtn").href;
 
 // Promotions en cours : une offre dont la date de fin est passée disparaît toute seule
+(async () => {
 try {
   const snap = await getDocs(query(collection(db,"offers"), orderBy("createdAt","desc")));
   const now = new Date(), pad = n => String(n).padStart(2, "0");
@@ -729,6 +878,7 @@ try {
     document.getElementById("promos").classList.remove("hidden");
   }
 } catch (e) { console.warn("Promotions non chargées", e); }
+})();
 
 // Commander une offre : la commande arrive dans l'administration (onglet Commandes)
 (function () {
@@ -783,6 +933,7 @@ try {
 })();
 
 // Témoignages de clients
+(async () => {
 try {
   const snap = await getDocs(query(collection(db,"testimonials"), orderBy("createdAt","desc")));
   if (!snap.empty) {
@@ -793,6 +944,7 @@ try {
     document.getElementById("avis").classList.remove("hidden");
   }
 } catch (e) { console.warn("Témoignages non chargés", e); }
+})();
 
 // Demande de devis (reçue dans l'administration)
 const quoteForm = document.getElementById("quoteForm");
@@ -860,6 +1012,7 @@ quoteForm.addEventListener("submit", async ev => {
 })();
 
 // Annonce affichée en haut de la page (publiée depuis l'administration)
+(async () => {
 try {
   const n = await getDoc(doc(db, "site", "news"));
   if (n.exists()) {
@@ -876,6 +1029,7 @@ try {
     }
   }
 } catch (e) { console.warn("Annonce non chargée", e); }
+})();
 
 // Inscription des membres (email + WhatsApp)
 const memberForm = document.getElementById("memberForm");
@@ -932,64 +1086,5 @@ memberForm.addEventListener("submit", async ev => {
   btn.disabled = false;
 });
 </script>
-<script>
-/* Intro : étoile unique sur fond noir → clic → les deux autres étoiles apparaissent, tout s'illumine jusqu'au blanc */
-(function () {
-  var done;
-  window.introDone = new Promise(function (r) { done = r; });
-  var intro = document.getElementById("intro");
-  if (!intro) { done(); return; }
-  var root = document.documentElement;
-  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var $ = function (id) { return document.getElementById(id); };
-  var stage = $("introStage"), cv = $("introCanvas"), ctx = cv.getContext("2d");
-  var p1 = $("ip1"), p2 = $("ip2"), p3 = $("ip3"), white = $("introWhite");
-  var g = function (p) { return p.querySelector(".iglow"); };
-  var sv = function (p) { return p.querySelector(".isvg"); };
-  var started = false, raf = 0, W = 0, H = 0, dpr = 1;
-
-  /* --- petites étoiles très fines : chacune brille et bouge à sa manière --- */
-  var stars = [];
-  function rnd(a, b) { return a + Math.random() * (b - a); }
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var n = Math.max(45, Math.min(95, Math.round(W * H / 9000)));
-    stars = [];
-    for (var i = 0; i < n; i++) {
-      var kind = i % 3;
-      stars.push({
-        x: Math.random() * W, y: Math.random() * H,
-        r: rnd(.7, 2.1),
-        sp: rnd(.5, 2.6), ph: rnd(0, 6.28),            /* rythme et décalage du scintillement */
-        vx: kind === 0 ? rnd(-9, 9) : 0, vy: kind === 0 ? rnd(-7, 7) : 0,   /* dérive lente */
-        ax: kind === 1 ? rnd(6, 22) : 0, ay: kind === 1 ? rnd(6, 22) : 0,    /* balancement */
-        ws: rnd(.15, .6), wp: rnd(0, 6.28),
-        base: rnd(.45, 1), warm: Math.random() < .55
-      });
-    }
-    placeStar1();
-  }
-  function frame(now) {
-    var t = now / 1000;
-    ctx.clearRect(0, 0, W, H);
-    ctx.lineCap = "round";
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i];
-      var x = s.x + s.vx * t + s.ax * Math.sin(t * s.ws + s.wp);
-      var y = s.y + s.vy * t + s.ay * Math.cos(t * s.ws * 1.3 + s.wp);
-      x = ((x % W) + W) % W; y = ((y % H) + H) % H;
-      var tw = .5 + .5 * Math.sin(t * s.sp + s.ph);
-      tw = tw * tw;
-      var a = s.base * (.12 + .88 * tw);
-      var L = s.r * (1.6 + 5.5 * tw);
-      var col = s.warm ? "255,226,110" : "255,255,255";
-      ctx.strokeStyle = "rgba(" + col + "," + a.toFixed(3) + ")";
-      ctx.lineWidth = .7;
-      ctx.beginPath();
-      ctx.moveTo(x - L, y); ctx.lineTo(x + L, y);
-      ctx.moveTo(x, y - L); ctx.lineTo(x, y + L);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(" + col + "," + Ma
+</body>
+</html>
